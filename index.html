@@ -1055,6 +1055,15 @@ function getAssignmentsForDate(dateStr) {
   return currentAssignments.filter(a => a.due === dateStr && filters[a.course]);
 }
 
+function formatHours(h) {
+  if (!h || h <= 0) return '0 min';
+  const hrs = Math.floor(h);
+  const mins = Math.round((h - hrs) * 60);
+  if (hrs === 0) return `${mins} min`;
+  if (mins === 0) return `${hrs} hr`;
+  return `${hrs} hr ${mins} min`;
+}
+
 function formatDate(dateStr, time) {
   const d = new Date(dateStr + 'T12:00:00');
   const datePart = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -1213,7 +1222,7 @@ function generateStudyPlan(assignment, today) {
     html += `<div class="study-plan-step${cls}">`;
     html += `<span class="sp-day">${s.date}</span>`;
     html += `<span class="sp-task">${s.task}</span>`;
-    html += `<span class="sp-hours">${s.hours}h</span>`;
+    html += `<span class="sp-hours">${formatHours(s.hours)}</span>`;
     html += '</div>';
   }
   if (daysLeft <= 1) {
@@ -1239,7 +1248,7 @@ function showTooltip(e, assignment) {
   html += `<div class="tooltip-row"><strong>Due:</strong> ${formatDate(assignment.due, assignment.time)}</div>`;
   html += `<div class="tooltip-row"><strong>Type:</strong> ${assignment.type}</div>`;
   html += `<div class="tooltip-row"><strong>Points:</strong> ${assignment.points}</div>`;
-  if (assignment.hours) html += `<div class="tooltip-row"><strong>Est. Hours:</strong> ${assignment.hours}h</div>`;
+  if (assignment.hours) html += `<div class="tooltip-row"><strong>Est. Time:</strong> ${formatHours(assignment.hours)}</div>`;
   const pri = getPriority(assignment, todayStr);
   if (pri.level !== 'none') html += `<div class="tooltip-row"><strong>Priority:</strong> <span class="priority-badge priority-${pri.level}">${pri.level.toUpperCase()}</span></div>`;
   html += `<div class="tooltip-row"><strong>Status:</strong> ${doneMap[assignment.id] ? '\u2713 Done' : 'Pending'}</div>`;
@@ -1515,7 +1524,7 @@ function renderListItem(a) {
   const priorityHtml = (!isDone && priority.level !== 'none')
     ? `<span class="priority-tag priority-${priority.level}">${priority.level.toUpperCase()}</span>`
     : '';
-  const hoursHtml = a.hours ? `<span class="hours-badge"><strong>${a.hours}h</strong> est.</span>` : '';
+  const hoursHtml = a.hours ? `<span class="hours-badge"><strong>${formatHours(a.hours)}</strong> est.</span>` : '';
   return `
     <div class="list-item ${isDone ? 'done' : ''}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseover="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseout="scheduleHideTooltip()">
       <div class="checkbox">${isDone ? '\u2713' : ''}</div>
