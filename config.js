@@ -45,8 +45,8 @@ const APP_CONFIG = {
     },
     eecs370: {
       name: "EECS 370",
-      color: "#dc2626", bg: "#fee2e2",
-      darkColor: "#f87171", darkBg: "#4c1d1d",
+      color: "#cf51cd", bg: "#fee2e2",
+      darkColor: "#e18dcd", darkBg: "#993294",
       platform: "eecs370.github.io",
       platformUrl: "https://eecs370.github.io/"
     },
