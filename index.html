@@ -1327,7 +1327,8 @@ function getPriority(a, today) {
   const score = urgency * 2 + tw * 1.5 + hoursWeight + ptsWeight * 0.5;
 
   let level;
-  if (score >= 10) level = 'high';
+  if (daysUntil > 7) level = 'low';
+  else if (score >= 10) level = 'high';
   else if (score >= 6) level = 'med';
   else level = 'low';
 
