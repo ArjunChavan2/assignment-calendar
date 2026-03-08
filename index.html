@@ -511,14 +511,20 @@
     transition: width 0.3s;
   }
   .heat-0 { background: transparent; }
-  .heat-1 { background: #86efac; width: 25%; }
-  .heat-2 { background: #fbbf24; width: 50%; }
-  .heat-3 { background: #fb923c; width: 75%; }
-  .heat-4 { background: #ef4444; width: 100%; }
-  [data-theme="dark"] .heat-1 { background: #166534; }
-  [data-theme="dark"] .heat-2 { background: #854d0e; }
-  [data-theme="dark"] .heat-3 { background: #9a3412; }
-  [data-theme="dark"] .heat-4 { background: #991b1b; }
+  .heat-low  { background: #86efac; width: 33%; }
+  .heat-med  { background: #fb923c; width: 66%; }
+  .heat-high { background: #ef4444; width: 100%; }
+  [data-theme="dark"] .heat-low  { background: #166534; }
+  [data-theme="dark"] .heat-med  { background: #9a3412; }
+  [data-theme="dark"] .heat-high { background: #991b1b; }
+
+  /* Workload badges on chips (replaces priority badges) */
+  .workload-low  { background: #d1fae5; color: #059669; }
+  .workload-med  { background: #fed7aa; color: #ea580c; }
+  .workload-high { background: #fecaca; color: #dc2626; }
+  [data-theme="dark"] .workload-low  { background: #064e3b; color: #6ee7b7; }
+  [data-theme="dark"] .workload-med  { background: #431a04; color: #fdba74; }
+  [data-theme="dark"] .workload-high { background: #4c1d1d; color: #fca5a5; }
 
   /* Priority badges */
   .priority-badge {
@@ -1251,6 +1257,8 @@ function showTooltip(e, assignment) {
   if (assignment.hours) html += `<div class="tooltip-row"><strong>Est. Time:</strong> ${formatHours(assignment.hours)}</div>`;
   const pri = getPriority(assignment, todayStr);
   if (pri.level !== 'none') html += `<div class="tooltip-row"><strong>Priority:</strong> <span class="priority-badge priority-${pri.level}">${pri.level.toUpperCase()}</span></div>`;
+  const wl = getWorkloadBadge(assignment.hours);
+  if (wl) html += `<div class="tooltip-row"><strong>Workload:</strong> <span class="priority-badge ${wl.cls}">${wl.label}</span></div>`;
   html += `<div class="tooltip-row"><strong>Status:</strong> ${doneMap[assignment.id] ? '\u2713 Done' : 'Pending'}</div>`;
 
   if (platformUrl) {
@@ -1342,12 +1350,23 @@ function getDayHours(dateStr) {
     .reduce((sum, a) => sum + (a.hours || 0), 0);
 }
 
-function getHeatLevel(totalHours) {
-  if (totalHours <= 0) return 0;
-  if (totalHours <= 2) return 1;
-  if (totalHours <= 5) return 2;
-  if (totalHours <= 10) return 3;
-  return 4;
+// Bar = highest priority assignment that day
+function getDayMaxPriority(dateStr) {
+  const dayAssignments = currentAssignments.filter(a => a.due === dateStr && filters[a.course] && !doneMap[a.id]);
+  if (dayAssignments.length === 0) return 'none';
+  const order = { high: 3, med: 2, low: 1, none: 0 };
+  return dayAssignments.reduce((best, a) => {
+    const p = getPriority(a, todayStr).level;
+    return order[p] > order[best] ? p : best;
+  }, 'none');
+}
+
+// Exclamation = workload for that assignment
+function getWorkloadBadge(hours) {
+  if (!hours || hours <= 0) return null;
+  if (hours <= 2)  return { cls: 'workload-low',  label: '!'   };
+  if (hours <= 5)  return { cls: 'workload-med',  label: '!!'  };
+  return               { cls: 'workload-high', label: '!!!' };
 }
 
 // ========== PANIC MODE ==========
@@ -1433,24 +1452,23 @@ function renderCalendar() {
     if (isToday) classes += ' today';
     if (isOtherMonth) classes += ' other-month';
 
-    const dayHours = getDayHours(dateStr);
-    const heatLevel = getHeatLevel(dayHours);
+    const dayMaxPriority = getDayMaxPriority(dateStr);
 
     html += `<div class="${classes}">`;
     html += `<div class="day-num">${d.getDate()}</div>`;
-    if (heatLevel > 0) {
-      html += `<div class="heat-bar heat-${heatLevel}" title="${dayHours.toFixed(1)}h of work"></div>`;
+    if (dayMaxPriority !== 'none') {
+      html += `<div class="heat-bar heat-${dayMaxPriority}" title="${dayMaxPriority} priority day"></div>`;
     }
 
     for (const a of dayAssignments) {
       const isDone = doneMap[a.id];
       const chipClass = isDone ? 'done' : a.course;
       const isPanic = panicIds.has(a.id);
-      const priority = getPriority(a, todayStr);
+      const workload = !isDone ? getWorkloadBadge(a.hours) : null;
       html += `<div class="assignment-chip ${chipClass}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseover="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseout="scheduleHideTooltip()" style="cursor:pointer;">`;
       html += `<span class="check">${isDone ? '\u2713' : ''}</span>`;
-      if (!isDone && priority.level !== 'none') {
-        html += `<span class="priority-badge priority-${priority.level}">${priority.level === 'high' ? '!!!' : priority.level === 'med' ? '!!' : '!'}</span>`;
+      if (workload) {
+        html += `<span class="priority-badge ${workload.cls}">${workload.label}</span>`;
       }
       html += `<span>${a.name}</span>`;
       html += `<span class="chip-edit-icon">&#9998;</span>`;
@@ -1471,15 +1489,14 @@ function renderCalendar() {
     grid.parentNode.insertBefore(legendEl, grid.nextSibling);
   }
   legendEl.innerHTML = `
-    <span>Workload:</span>
-    <span class="swatch" style="background:#86efac"></span> Light (\u22642h)
-    <span class="swatch" style="background:#fbbf24"></span> Moderate (\u22645h)
-    <span class="swatch" style="background:#fb923c"></span> Heavy (\u226410h)
-    <span class="swatch" style="background:#ef4444"></span> Extreme (10h+)
-    <span style="margin-left:12px">Priority:</span>
-    <span class="priority-badge priority-high">!!!</span> High
-    <span class="priority-badge priority-med">!!</span> Med
-    <span class="priority-badge priority-low">!</span> Low
+    <span>Priority bar:</span>
+    <span class="swatch" style="background:#86efac"></span> Low
+    <span class="swatch" style="background:#fb923c"></span> Med
+    <span class="swatch" style="background:#ef4444"></span> High
+    <span style="margin-left:12px">Workload:</span>
+    <span class="priority-badge workload-high">!!!</span> &gt;5h
+    <span class="priority-badge workload-med">!!</span> \u22645h
+    <span class="priority-badge workload-low">!</span> \u22642h
   `;
 }
 
