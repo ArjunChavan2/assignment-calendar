@@ -671,7 +671,7 @@
   <div class="data-age" id="dataAgeList"></div>
 </div>
 
-<div class="tooltip" id="tooltip"></div>
+<div class="tooltip" id="tooltip" onmouseenter="cancelHideTooltip()" onmouseleave="hideTooltip()"></div>
 
 <script>
 // ========== DERIVED FROM CONFIG ==========
@@ -1269,7 +1269,23 @@ function showTooltip(e, assignment) {
   tooltip.style.top = top + 'px';
 }
 
+let tooltipHideTimer = null;
+
+function scheduleHideTooltip() {
+  tooltipHideTimer = setTimeout(() => {
+    document.getElementById('tooltip').classList.remove('show');
+  }, 200);
+}
+
+function cancelHideTooltip() {
+  if (tooltipHideTimer) {
+    clearTimeout(tooltipHideTimer);
+    tooltipHideTimer = null;
+  }
+}
+
 function hideTooltip() {
+  cancelHideTooltip();
   document.getElementById('tooltip').classList.remove('show');
 }
 
@@ -1421,7 +1437,7 @@ function renderCalendar() {
       const chipClass = isDone ? 'done' : a.course;
       const isPanic = panicIds.has(a.id);
       const priority = getPriority(a, todayStr);
-      html += `<div class="assignment-chip ${chipClass}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseover="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseout="hideTooltip()" style="cursor:pointer;">`;
+      html += `<div class="assignment-chip ${chipClass}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseover="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseout="scheduleHideTooltip()" style="cursor:pointer;">`;
       html += `<span class="check">${isDone ? '\u2713' : ''}</span>`;
       if (!isDone && priority.level !== 'none') {
         html += `<span class="priority-badge priority-${priority.level}">${priority.level === 'high' ? '!!!' : priority.level === 'med' ? '!!' : '!'}</span>`;
@@ -1501,7 +1517,7 @@ function renderListItem(a) {
     : '';
   const hoursHtml = a.hours ? `<span class="hours-badge"><strong>${a.hours}h</strong> est.</span>` : '';
   return `
-    <div class="list-item ${isDone ? 'done' : ''}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseover="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseout="hideTooltip()">
+    <div class="list-item ${isDone ? 'done' : ''}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseover="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseout="scheduleHideTooltip()">
       <div class="checkbox">${isDone ? '\u2713' : ''}</div>
       <div class="info">
         <div class="name">${a.name}</div>
