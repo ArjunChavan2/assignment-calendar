@@ -157,16 +157,26 @@ const APP_CONFIG = {
     { id: "s250-ep04", name: "EP 04", course: "stats250", due: "2026-02-21", time: "2:30 PM", type: "ep", points: "40", hours: 2 },
     { id: "s250-ep05", name: "EP 05", course: "stats250", due: "2026-02-27", time: "8:00 PM", type: "ep", points: "40", hours: 2 },
     { id: "s250-ep06", name: "EP 06", course: "stats250", due: "2026-03-16", time: "8:00 PM", type: "ep", points: "40", hours: 2 },
+    { id: "s250-ep07", name: "EP 07", course: "stats250", due: "2026-03-27", time: "8:00 PM", type: "ep", points: "40", hours: 2 },
+    { id: "s250-ep08", name: "EP 08", course: "stats250", due: "2026-04-03", time: "8:00 PM", type: "ep", points: "40", hours: 2 },
+    { id: "s250-ep09", name: "EP 09", course: "stats250", due: "2026-04-10", time: "8:00 PM", type: "ep", points: "40", hours: 2 },
+    { id: "s250-ep10", name: "EP 10", course: "stats250", due: "2026-04-17", time: "8:00 PM", type: "ep", points: "40", hours: 2 },
     // STATS 250 - Labs
     { id: "s250-lab1", name: "Lab 1", course: "stats250", due: "2026-01-23", time: "8:00 AM", type: "lab", points: "20", hours: 1.5 },
     { id: "s250-lab2", name: "Lab 2", course: "stats250", due: "2026-01-30", time: "1:00 PM", type: "lab", points: "20", hours: 1.5 },
     { id: "s250-lab3", name: "Lab 3", course: "stats250", due: "2026-02-06", time: "1:00 PM", type: "lab", points: "20", hours: 1.5 },
     { id: "s250-lab4", name: "Lab 4", course: "stats250", due: "2026-02-27", time: "8:00 PM", type: "lab", points: "20", hours: 1.5 },
     { id: "s250-lab5", name: "Lab 5", course: "stats250", due: "2026-03-13", time: "8:00 PM", type: "lab", points: "20", hours: 1.5 },
-    // STATS 250 - Case Study
-    { id: "s250-cs1", name: "Case Study 1", course: "stats250", due: "2026-02-21", time: "1:00 PM", type: "casestudy", points: "\u2014", hours: 3 },
+    { id: "s250-lab6", name: "Lab 6", course: "stats250", due: "2026-03-27", time: "8:00 PM", type: "lab", points: "20", hours: 1.5 },
+    { id: "s250-lab7", name: "Lab 7", course: "stats250", due: "2026-04-03", time: "8:00 PM", type: "lab", points: "20", hours: 1.5 },
+    // STATS 250 - Case Studies
+    { id: "s250-cs1", name: "Case Study 1", course: "stats250", due: "2026-02-21", time: "8:00 PM", type: "casestudy", points: "40", hours: 3 },
+    { id: "s250-cs2", name: "Case Study 2", course: "stats250", due: "2026-03-21", time: "8:00 PM", type: "casestudy", points: "40", hours: 3 },
+    { id: "s250-cs3", name: "Case Study 3", course: "stats250", due: "2026-04-11", time: "8:00 PM", type: "casestudy", points: "40", hours: 3 },
     // STATS 250 - Exams
-    { id: "s250-exam1", name: "Exam 1", course: "stats250", due: "2026-02-25", time: null, type: "exam", points: "75", hours: 8 },
+    { id: "s250-exam1", name: "Exam 1", course: "stats250", due: "2026-02-11", time: "6:00 PM", type: "exam", points: "75", hours: 8 },
+    { id: "s250-exam2", name: "Exam 2", course: "stats250", due: "2026-03-19", time: "6:00 PM", type: "exam", points: "75", hours: 8 },
+    { id: "s250-exam3", name: "Exam 3", course: "stats250", due: "2026-04-23", time: "7:30 PM", type: "exam", points: "75", hours: 8 },
     // STATS 250 - Lecture Activities
     { id: "s250-l04pw", name: "Lecture 04 PW", course: "stats250", due: "2026-01-26", time: "8:00 AM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l04gw", name: "Lecture 04 GW", course: "stats250", due: "2026-01-26", time: "3:20 PM", type: "lecture", points: "20", hours: 0.5 },
