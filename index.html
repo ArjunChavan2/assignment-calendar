@@ -763,7 +763,7 @@ for (const [id, c] of Object.entries(courses)) {
 })();
 
 // ========== STATE ==========
-const todayStr = APP_CONFIG.todayOverride || new Date().toISOString().slice(0, 10);
+const todayStr = new Date().toISOString().slice(0, 10);
 let currentDate = new Date(todayStr + 'T12:00:00');
 currentDate.setDate(1); // start of month
 let viewMode = 'calendar';

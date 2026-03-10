@@ -12,10 +12,7 @@ const APP_CONFIG = {
   title: "Arjun's Assignment Calendar",
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
-  // Set to a date string like "2026-03-07" to pin "today", or null to use the real date
-  todayOverride: null,
-
-  // When the assignment data was last scraped (shown in footer)
+  // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
   scrapeDate: "March 9, 2026",
 
   // ---- Firebase (each user needs their own project) ----
