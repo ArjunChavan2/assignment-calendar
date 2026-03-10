@@ -763,7 +763,8 @@ for (const [id, c] of Object.entries(courses)) {
 })();
 
 // ========== STATE ==========
-const todayStr = new Date().toISOString().slice(0, 10);
+const _d = new Date();
+const todayStr = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
 let currentDate = new Date(todayStr + 'T12:00:00');
 currentDate.setDate(1); // start of month
 let viewMode = 'calendar';
