@@ -1280,16 +1280,18 @@ function generateStudyPlan(assignment, today) {
     }
   } else {
     // Project study plan: phase-based breakdown
+    // 1-2 days reading/planning, 4-5 days coding (3 submissions/day limit), rest for testing
     const phases = [
-      { pct: 0.10, label: 'Read spec thoroughly & understand requirements' },
-      { pct: 0.10, label: 'Plan approach & outline design' },
-      { pct: 0.40, label: 'Implement core functionality' },
-      { pct: 0.15, label: 'Implement edge cases & remaining features' },
-      { pct: 0.15, label: 'Test, debug & fix issues' },
+      { pct: 0.08, label: 'Read spec thoroughly & understand requirements' },
+      { pct: 0.08, label: 'Plan approach & outline design' },
+      { pct: 0.38, label: 'Implement core functionality (3 submissions/day)' },
+      { pct: 0.18, label: 'Implement edge cases & remaining features' },
+      { pct: 0.18, label: 'Test, debug & fix issues' },
       { pct: 0.10, label: 'Final review, clean up & submit' },
     ];
 
-    const idealDays = Math.min(daysLeft, Math.max(3, Math.ceil(totalHours / 2.5)));
+    // Minimum 8 days: 2 reading/planning + 4-5 coding + 1-2 testing/submit
+    const idealDays = Math.min(daysLeft, Math.max(8, Math.ceil(totalHours / 1.5)));
     const startOffset = daysLeft - idealDays;
 
     let dayIndex = 0;
@@ -1711,14 +1713,14 @@ function getTodayStudyTasks() {
         { pct: 0.05, label: 'Light review & rest before exam' },
       ];
     } else {
-      idealDays = Math.min(daysLeft, Math.max(3, Math.ceil(totalHours / 2.5)));
+      idealDays = Math.min(daysLeft, Math.max(8, Math.ceil(totalHours / 1.5)));
       startOffset = daysLeft - idealDays;
       phases = [
-        { pct: 0.10, label: 'Read spec thoroughly & understand requirements' },
-        { pct: 0.10, label: 'Plan approach & outline design' },
-        { pct: 0.40, label: 'Implement core functionality' },
-        { pct: 0.15, label: 'Implement edge cases & remaining features' },
-        { pct: 0.15, label: 'Test, debug & fix issues' },
+        { pct: 0.08, label: 'Read spec thoroughly & understand requirements' },
+        { pct: 0.08, label: 'Plan approach & outline design' },
+        { pct: 0.38, label: 'Implement core functionality (3 submissions/day)' },
+        { pct: 0.18, label: 'Implement edge cases & remaining features' },
+        { pct: 0.18, label: 'Test, debug & fix issues' },
         { pct: 0.10, label: 'Final review, clean up & submit' },
       ];
     }
