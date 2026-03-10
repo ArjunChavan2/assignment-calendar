@@ -609,6 +609,78 @@
     width: 14px; height: 8px;
     border-radius: 2px;
   }
+
+  /* Daily View */
+  .daily-container { padding: 24px; max-width: 700px; margin: 0 auto; display: none; }
+  .daily-header {
+    font-size: 1.1rem; font-weight: 700; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .daily-subheader {
+    font-size: 0.8rem; color: var(--gray); margin-bottom: 20px;
+  }
+  .daily-section { margin-bottom: 28px; }
+  .daily-section-title {
+    font-size: 0.9rem; font-weight: 700; margin-bottom: 10px;
+    padding-bottom: 6px; border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .daily-section-title .section-icon { font-size: 1rem; }
+  .daily-section-title .section-count {
+    font-size: 0.7rem; font-weight: 600; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px;
+    color: var(--gray);
+  }
+  .daily-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
+  }
+  .daily-item:hover { box-shadow: 0 2px 8px var(--shadow); }
+  .daily-item.done { opacity: 0.5; }
+  .daily-item .daily-check {
+    width: 20px; height: 20px; border-radius: 4px;
+    border: 2px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; transition: all 0.15s;
+  }
+  .daily-item.done .daily-check { background: var(--done); border-color: var(--done); color: #fff; }
+  .daily-item .daily-info { flex: 1; min-width: 0; }
+  .daily-item .daily-name { font-weight: 600; font-size: 0.88rem; }
+  .daily-item.done .daily-name { text-decoration: line-through; }
+  .daily-item .daily-meta { font-size: 0.78rem; color: var(--gray); margin-top: 2px; }
+  .daily-item .daily-time-badge {
+    font-size: 0.72rem; font-weight: 600; color: #2563eb;
+    background: #eff6ff; padding: 3px 8px; border-radius: 4px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  [data-theme="dark"] .daily-item .daily-time-badge { background: #1e3a5f; color: #93c5fd; }
+  .daily-item .course-tag {
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 999px;
+    font-weight: 600; white-space: nowrap; flex-shrink: 0;
+  }
+  .daily-empty {
+    text-align: center; padding: 40px 20px; color: var(--gray);
+    font-size: 0.9rem;
+  }
+  .daily-empty .empty-icon { font-size: 2rem; margin-bottom: 8px; }
+  .daily-summary {
+    display: flex; gap: 12px; margin-bottom: 20px;
+  }
+  .daily-summary-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; flex: 1; text-align: center;
+  }
+  .daily-summary-card .ds-num { font-size: 1.3rem; font-weight: 700; }
+  .daily-summary-card .ds-label { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+  .daily-study-parent {
+    font-size: 0.72rem; color: var(--gray); font-weight: 600;
+    margin-top: 1px;
+  }
+  .daily-study-parent a {
+    color: var(--gray); text-decoration: underline; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -650,6 +722,7 @@
     </div>
     <button onclick="goToday()">Today</button>
     <button id="viewToggle" onclick="toggleView()">List View</button>
+    <button id="dailyToggle" onclick="switchToDaily()">Daily</button>
     <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()" title="Toggle edit mode">&#9998; Edit</button>
     <button class="add-btn" id="addBtn" onclick="openAddModal()" title="Add assignment">+ Add</button>
     <div style="display:flex;align-items:center;gap:4px;">
@@ -675,6 +748,11 @@
   <div class="stats" id="stats"></div>
   <div id="listContent"></div>
   <div class="data-age" id="dataAgeList"></div>
+</div>
+
+<div class="daily-container" id="dailyView">
+  <div id="dailyContent"></div>
+  <div class="data-age" id="dataAgeDaily"></div>
 </div>
 
 <div class="tooltip" id="tooltip" onmouseenter="cancelHideTooltip()" onmouseleave="hideTooltip()"></div>
@@ -840,6 +918,14 @@ function initFirebase() {
     additionsRef.on('value', (snap) => { additions = snap.val() || {}; render(); });
     deletionsRef.on('value', (snap) => { deletions = snap.val() || {}; render(); });
 
+    // Daily study task completions
+    dailyTaskRef = db.ref('dailyTasks');
+    dailyTaskRef.on('value', (snap) => {
+      dailyTaskDone = snap.val() || {};
+      try { localStorage.setItem('daily-tasks-done-v1', JSON.stringify(dailyTaskDone)); } catch(e) {}
+      if (viewMode === 'daily') render();
+    });
+
     db.ref('.info/connected').on('value', (snap) => {
       setSyncStatus(snap.val() ? 'synced' : 'offline');
     });
@@ -899,6 +985,11 @@ function goToday() {
 
 function toggleView() {
   viewMode = viewMode === 'calendar' ? 'list' : 'calendar';
+  render();
+}
+
+function switchToDaily() {
+  viewMode = viewMode === 'daily' ? 'calendar' : 'daily';
   render();
 }
 
@@ -1151,7 +1242,7 @@ function generateStudyPlan(assignment, today) {
     return days[d.getDay()] + ' ' + (d.getMonth()+1) + '/' + d.getDate();
   }
   function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-  function dateStr(d) { return d.toISOString().slice(0,10); }
+  function dateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
   let steps = [];
 
@@ -1411,6 +1502,8 @@ function render() {
 
   document.getElementById('viewToggle').textContent =
     viewMode === 'calendar' ? 'List View' : 'Calendar View';
+  document.getElementById('dailyToggle').textContent =
+    viewMode === 'daily' ? 'Calendar' : 'Daily';
 
   // Update filter button styles
   for (const id of Object.keys(courses)) {
@@ -1419,6 +1512,7 @@ function render() {
 
   document.getElementById('calendarView').style.display = viewMode === 'calendar' ? 'block' : 'none';
   document.getElementById('listView').style.display = viewMode === 'list' ? 'block' : 'none';
+  document.getElementById('dailyView').style.display = viewMode === 'daily' ? 'block' : 'none';
 
   // Edit mode class on body for CSS hooks
   document.body.classList.toggle('edit-active', editMode);
@@ -1426,7 +1520,8 @@ function render() {
   checkPanicMode();
 
   if (viewMode === 'calendar') renderCalendar();
-  else renderList();
+  else if (viewMode === 'list') renderList();
+  else renderDaily();
 }
 
 function renderCalendar() {
@@ -1557,6 +1652,180 @@ function renderListItem(a) {
       <span class="list-item-edit-icon">&#9998;</span>
     </div>
   `;
+}
+
+// ========== DAILY VIEW ==========
+// Track completed study tasks (keyed by "assignmentId::task-label")
+let dailyTaskDone = {};
+let dailyTaskRef = null;
+
+// Load daily task done state from localStorage
+try {
+  const savedDt = localStorage.getItem('daily-tasks-done-v1');
+  if (savedDt) dailyTaskDone = JSON.parse(savedDt);
+} catch(e) {}
+
+function saveDailyTaskDone() {
+  try { localStorage.setItem('daily-tasks-done-v1', JSON.stringify(dailyTaskDone)); } catch(e) {}
+  if (dailyTaskRef) {
+    dailyTaskRef.set(dailyTaskDone).catch(() => {});
+  }
+}
+
+function toggleDailyTask(key) {
+  dailyTaskDone[key] = !dailyTaskDone[key];
+  saveDailyTaskDone();
+  render();
+}
+
+function getTodayStudyTasks() {
+  const tasks = [];
+  const todayDate = new Date(todayStr + 'T00:00:00');
+
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function dateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  for (const a of currentAssignments) {
+    if (a.type !== 'exam' && a.type !== 'project') continue;
+    if (doneMap[a.id]) continue;
+    if (!filters[a.course]) continue;
+
+    const dueDate = new Date(a.due + 'T23:59:00');
+    const daysLeft = Math.ceil((dueDate - todayDate) / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) continue;
+
+    const totalHours = a.hours || (a.type === 'exam' ? 10 : 8);
+
+    let phases, idealDays, startOffset;
+
+    if (a.type === 'exam') {
+      idealDays = Math.min(daysLeft, Math.max(3, Math.ceil(totalHours / 2)));
+      startOffset = daysLeft - idealDays;
+      phases = [
+        { pct: 0.30, label: 'Review lecture notes & key concepts' },
+        { pct: 0.25, label: 'Work through practice problems' },
+        { pct: 0.25, label: 'Revisit homework solutions & past exams' },
+        { pct: 0.15, label: 'Focus on weak areas & tricky topics' },
+        { pct: 0.05, label: 'Light review & rest before exam' },
+      ];
+    } else {
+      idealDays = Math.min(daysLeft, Math.max(3, Math.ceil(totalHours / 2.5)));
+      startOffset = daysLeft - idealDays;
+      phases = [
+        { pct: 0.10, label: 'Read spec thoroughly & understand requirements' },
+        { pct: 0.10, label: 'Plan approach & outline design' },
+        { pct: 0.40, label: 'Implement core functionality' },
+        { pct: 0.15, label: 'Implement edge cases & remaining features' },
+        { pct: 0.15, label: 'Test, debug & fix issues' },
+        { pct: 0.10, label: 'Final review, clean up & submit' },
+      ];
+    }
+
+    const hoursPerDay = +(totalHours / idealDays).toFixed(1);
+    let dayIndex = 0;
+
+    for (const phase of phases) {
+      const phaseDays = Math.max(1, Math.round(idealDays * phase.pct));
+      const phaseHours = a.type === 'exam' ? hoursPerDay : +(totalHours * phase.pct / phaseDays).toFixed(1);
+      for (let d = 0; d < phaseDays && dayIndex < idealDays; d++, dayIndex++) {
+        const date = addDays(todayDate, startOffset + dayIndex);
+        const ds = dateStr(date);
+        if (ds === todayStr) {
+          tasks.push({
+            assignmentId: a.id,
+            assignmentName: a.name,
+            course: a.course,
+            task: phase.label,
+            hours: phaseHours,
+            dueDate: a.due,
+            type: a.type
+          });
+        }
+      }
+    }
+  }
+  return tasks;
+}
+
+function renderDaily() {
+  const todayAssignments = getAssignmentsForDate(todayStr).filter(a => !doneMap[a.id] || true); // show all, done or not
+  const studyTasks = getTodayStudyTasks();
+
+  const todayDateObj = new Date(todayStr + 'T12:00:00');
+  const dateLabel = todayDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Summary counts
+  const dueCount = todayAssignments.filter(a => !doneMap[a.id]).length;
+  const studyCount = studyTasks.filter(t => !dailyTaskDone[t.assignmentId + '::' + t.task]).length;
+  const totalHours = todayAssignments.filter(a => !doneMap[a.id]).reduce((s, a) => s + (a.hours || 0), 0)
+    + studyTasks.filter(t => !dailyTaskDone[t.assignmentId + '::' + t.task]).reduce((s, t) => s + (t.hours || 0), 0);
+
+  let html = '';
+  html += `<div class="daily-header">Daily Assignments</div>`;
+  html += `<div class="daily-subheader">${dateLabel}</div>`;
+
+  // Summary cards
+  html += `<div class="daily-summary">`;
+  html += `<div class="daily-summary-card"><div class="ds-num" style="color:#2563eb">${dueCount}</div><div class="ds-label">Due Today</div></div>`;
+  html += `<div class="daily-summary-card"><div class="ds-num" style="color:#7c3aed">${studyCount}</div><div class="ds-label">Study Tasks</div></div>`;
+  html += `<div class="daily-summary-card"><div class="ds-num">${totalHours.toFixed(1)}h</div><div class="ds-label">Est. Work</div></div>`;
+  html += `</div>`;
+
+  // Due today section
+  if (todayAssignments.length > 0) {
+    html += `<div class="daily-section">`;
+    html += `<div class="daily-section-title"><span class="section-icon">&#128203;</span> Due Today <span class="section-count">${todayAssignments.length}</span></div>`;
+    for (const a of todayAssignments) {
+      const isDone = doneMap[a.id];
+      const pri = getPriority(a, todayStr);
+      const priHtml = (!isDone && pri.level !== 'none')
+        ? `<span class="priority-tag priority-${pri.level}" style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:4px;">${pri.level.toUpperCase()}</span>` : '';
+      html += `<div class="daily-item ${isDone ? 'done' : ''}" onclick="toggleDone('${a.id}'); render();">`;
+      html += `<div class="daily-check">${isDone ? '\u2713' : ''}</div>`;
+      html += `<div class="daily-info">`;
+      html += `<div class="daily-name">${a.name}</div>`;
+      html += `<div class="daily-meta">${a.time ? 'Due at ' + a.time : 'Due today'} \u00b7 ${a.type} \u00b7 ${a.points || 0} pts</div>`;
+      html += `</div>`;
+      if (a.hours) html += `<div class="daily-time-badge">${formatHours(a.hours)}</div>`;
+      html += priHtml;
+      html += `<span class="course-tag ${a.course}">${courseNames[a.course]}</span>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Study tasks section
+  if (studyTasks.length > 0) {
+    html += `<div class="daily-section">`;
+    html += `<div class="daily-section-title"><span class="section-icon">&#128218;</span> Study / Work Plan <span class="section-count">${studyTasks.length}</span></div>`;
+    for (const t of studyTasks) {
+      const key = t.assignmentId + '::' + t.task;
+      const isDone = dailyTaskDone[key];
+      const dueLabel = formatDate(t.dueDate, null);
+      html += `<div class="daily-item ${isDone ? 'done' : ''}" onclick="toggleDailyTask('${key.replace(/'/g, "\\'")}')">`;
+      html += `<div class="daily-check">${isDone ? '\u2713' : ''}</div>`;
+      html += `<div class="daily-info">`;
+      html += `<div class="daily-name">${t.task}</div>`;
+      html += `<div class="daily-study-parent">For: ${t.assignmentName} (${t.type === 'exam' ? 'Exam' : 'Project'} \u00b7 due ${dueLabel})</div>`;
+      html += `</div>`;
+      html += `<div class="daily-time-badge">${formatHours(t.hours)}</div>`;
+      html += `<span class="course-tag ${t.course}">${courseNames[t.course]}</span>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Empty state
+  if (todayAssignments.length === 0 && studyTasks.length === 0) {
+    html += `<div class="daily-empty">`;
+    html += `<div class="empty-icon">&#127881;</div>`;
+    html += `Nothing scheduled for today! Enjoy your free time.`;
+    html += `</div>`;
+  }
+
+  document.getElementById('dailyContent').innerHTML = html;
 }
 
 // ========== AUTO-MARK PAST ==========
