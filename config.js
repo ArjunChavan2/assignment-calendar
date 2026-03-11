@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 9, 2026",
+  scrapeDate: "March 11, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -98,6 +98,13 @@ const APP_CONFIG = {
     { id: "270-q8", name: "Quiz 8 (Latches/FFs)", course: "eecs270", due: "2026-02-24", time: "11:59 PM", type: "quiz", points: "25", hours: 1.5 },
     { id: "270-q9", name: "Quiz 9 (Seq. Analysis)", course: "eecs270", due: "2026-02-25", time: "11:59 PM", type: "quiz", points: "17", hours: 1.5 },
     { id: "270-q10", name: "Quiz 10 (Seq. Design)", course: "eecs270", due: "2026-02-27", time: "11:59 PM", type: "quiz", points: "18", hours: 1.5 },
+    { id: "270-q11", name: "Quiz 11 (Seq. Design Examples)", course: "eecs270", due: "2026-03-10", time: "11:59 PM", type: "quiz", points: "23", hours: 1.5 },
+    { id: "270-q12", name: "Quiz 12 (Sequential Blocks)", course: "eecs270", due: "2026-03-12", time: "11:59 PM", type: "quiz", points: "21", hours: 1.5 },
+    { id: "270-q14", name: "Quiz 14 (RTL Design)", course: "eecs270", due: "2026-03-19", time: "11:59 PM", type: "quiz", points: "20", hours: 1.5 },
+    { id: "270-q15", name: "Quiz 15 (Seq. Timing Analysis)", course: "eecs270", due: "2026-03-27", time: "11:59 PM", type: "quiz", points: "20", hours: 1.5 },
+    { id: "270-q16", name: "Quiz 16 (Seq. Multiplication)", course: "eecs270", due: "2026-04-03", time: "11:59 PM", type: "quiz", points: "16", hours: 1.5 },
+    { id: "270-q17", name: "Quiz 17 (Carry-Lookahead Adders)", course: "eecs270", due: "2026-04-14", time: "11:59 PM", type: "quiz", points: "22", hours: 1.5 },
+    { id: "270-q18", name: "Quiz 18 (State Minimization)", course: "eecs270", due: "2026-04-16", time: "11:59 PM", type: "quiz", points: "20", hours: 1.5 },
     // EECS 270 - Exams
     { id: "270-exam1", name: "Exam 1", course: "eecs270", due: "2026-02-15", time: null, type: "exam", points: "100", hours: 12 },
     { id: "270-exam2", name: "Exam 2", course: "eecs270", due: "2026-03-20", time: null, type: "exam", points: "100", hours: 12 },
@@ -129,8 +136,8 @@ const APP_CONFIG = {
     { id: "370-final", name: "Final Exam", course: "eecs370", due: "2026-04-23", time: "10:30 AM", type: "exam", points: "100", hours: 15 },
 
     // ===== EECS 442 - Homeworks =====
-    { id: "442-hw1", name: "HW1: Photos", course: "eecs442", due: "2026-01-29", time: "1:15 AM", type: "homework", points: "120", hours: 10 },
-    { id: "442-hw2", name: "HW2: Filtering", course: "eecs442", due: "2026-02-05", time: "4:00 PM", type: "homework", points: "120", hours: 10 },
+    { id: "442-hw1", name: "HW1: Faces", course: "eecs442", due: "2026-01-29", time: "5:29 PM", type: "homework", points: "120", hours: 10 },
+    { id: "442-hw2", name: "HW2: Filtering", course: "eecs442", due: "2026-02-05", time: "5:30 PM", type: "homework", points: "120", hours: 10 },
     { id: "442-hw3", name: "HW3: Frequency", course: "eecs442", due: "2026-02-19", time: "5:30 PM", type: "homework", points: "120", hours: 10 },
     // EECS 442 - Quizzes
     { id: "442-q1", name: "Quiz 1 (02/02)", course: "eecs442", due: "2026-02-02", time: null, type: "quiz", points: "\u2014", hours: 0.5 },
@@ -214,6 +221,7 @@ const APP_CONFIG = {
     { id: "tc-w8-dataviz", name: "Week 8 - Data Visualization", course: "tc300", due: "2026-02-26", time: "11:59 PM", type: "assignment", points: "2", hours: 1 },
     { id: "tc-report-outline", name: "Written Report Outline", course: "tc300", due: "2026-02-27", time: "11:59 PM", type: "assignment", points: "20", hours: 3 },
     { id: "tc-report-draft", name: "Written Report Draft", course: "tc300", due: "2026-03-19", time: "11:30 AM", type: "assignment", points: "30", hours: 8 },
+    { id: "tc-final-report", name: "Final Written Report", course: "tc300", due: "2026-03-27", time: "11:59 PM", type: "assignment", points: "75", hours: 10 },
     { id: "tc-ec-originpro", name: "EC: OriginPro Familiarizing", course: "tc300", due: "2026-04-24", time: "11:59 PM", type: "assignment", points: "EC", hours: 2 },
   ],
 
@@ -224,7 +232,7 @@ const APP_CONFIG = {
     // EECS 270
     '270-q1','270-q2','270-q3','270-q4','270-q5','270-q6','270-q7','270-q8','270-q9','270-q10',
     '270-p1','270-p1-signoff','270-p2a','270-p2b','270-p2a-signoff','270-p2b-signoff',
-    '270-p3-auto','270-p3-signoff','270-p4','270-exam1',
+    '270-p3-auto','270-p3-signoff','270-p4','270-exam1','270-q11',
     // EECS 370
     '370-p1a','370-p1m','370-p1s','370-p2a',
     '370-hw1','370-hw2',
