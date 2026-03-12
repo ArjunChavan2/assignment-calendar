@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 11, 2026",
+  scrapeDate: "March 12, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -148,6 +148,7 @@ const APP_CONFIG = {
     { id: "442-q6", name: "Quiz 6 (02/18)", course: "eecs442", due: "2026-02-18", time: "11:49 AM", type: "quiz", points: "5", hours: 0.5 },
     // EECS 442 - Quizzes (continued)
     { id: "442-q7", name: "Quiz 7 (03/09)", course: "eecs442", due: "2026-03-09", time: "11:53 AM", type: "quiz", points: "5", hours: 0.5 },
+    { id: "442-q8", name: "Quiz 8 (03/11)", course: "eecs442", due: "2026-03-11", time: "11:55 AM", type: "quiz", points: "5", hours: 0.5 },
     // EECS 442 - Exams
     { id: "442-midterm", name: "Midterm Evaluation", course: "eecs442", due: "2026-03-14", time: "11:59 PM", type: "exam", points: "\u2014", hours: 12 },
 
@@ -201,6 +202,7 @@ const APP_CONFIG = {
     { id: "s250-l12pw", name: "Lecture 12 PW", course: "stats250", due: "2026-03-09", time: "2:30 PM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l12gw", name: "Lecture 12 GW", course: "stats250", due: "2026-03-09", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l13pw", name: "Lecture 13 PW", course: "stats250", due: "2026-03-11", time: "2:30 PM", type: "lecture", points: "10", hours: 0.5 },
+    { id: "s250-l13gw", name: "Lecture 13 GW", course: "stats250", due: "2026-03-11", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
 
     // ===== TCHNCLCM 300 =====
     { id: "tc-survey", name: "Pre-Course Survey", course: "tc300", due: "2026-01-16", time: "11:59 PM", type: "assignment", points: "1", hours: 0.25 },
@@ -240,14 +242,15 @@ const APP_CONFIG = {
     // EECS 442
     '442-hw1','442-hw2','442-hw3',
     '442-q3','442-q4','442-q5','442-q6','442-q7',
+    '442-midterm',
     // STATS 250
     's250-ep01','s250-ep02','s250-ep03','s250-ep04',
-    's250-lab1','s250-lab2','s250-lab3','s250-lab4',
+    's250-lab1','s250-lab2','s250-lab3','s250-lab4','s250-lab5',
     's250-cs1','s250-exam1',
     's250-l04pw','s250-l04gw','s250-l05pw','s250-l05gw',
     's250-l06gw','s250-l07pw','s250-l07gw',
     's250-l08pw','s250-l08gw','s250-l09pw',
-    's250-l11gw','s250-l12pw','s250-l12gw',
+    's250-l11gw','s250-l12pw','s250-l12gw','s250-l13pw','s250-l13gw',
     // TC 300
     'tc-survey','tc-syllabus','tc-w2','tc-w3','tc-resume-draft','tc-cover-draft','tc-annotated-job',
     'tc-w4','tc-w5','tc-revised-resume','tc-revised-cover','tc-portfolio-reflect',
