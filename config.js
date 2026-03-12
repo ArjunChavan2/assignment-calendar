@@ -222,7 +222,9 @@ const APP_CONFIG = {
     { id: "tc-w7", name: "Week 7 - Reading Articles Group", course: "tc300", due: "2026-02-19", time: "11:59 PM", type: "assignment", points: "2", hours: 1 },
     { id: "tc-w8-dataviz", name: "Week 8 - Data Visualization", course: "tc300", due: "2026-02-26", time: "11:59 PM", type: "assignment", points: "2", hours: 1 },
     { id: "tc-report-outline", name: "Written Report Outline", course: "tc300", due: "2026-02-27", time: "11:59 PM", type: "assignment", points: "20", hours: 3 },
+    { id: "tc-w10-presentation", name: "Week 10 - Presentation Delivery", course: "tc300", due: "2026-03-12", time: "11:59 PM", type: "assignment", points: "2", hours: 1 },
     { id: "tc-report-draft", name: "Written Report Draft", course: "tc300", due: "2026-03-19", time: "11:30 AM", type: "assignment", points: "30", hours: 8 },
+    { id: "tc-oral-proposal", name: "Oral Report Topic Proposal", course: "tc300", due: "2026-03-20", time: "11:59 PM", type: "assignment", points: "10", hours: 2 },
     { id: "tc-final-report", name: "Final Written Report", course: "tc300", due: "2026-03-27", time: "11:59 PM", type: "assignment", points: "75", hours: 10 },
     { id: "tc-ec-originpro", name: "EC: OriginPro Familiarizing", course: "tc300", due: "2026-04-24", time: "11:59 PM", type: "assignment", points: "EC", hours: 2 },
   ],
@@ -234,7 +236,7 @@ const APP_CONFIG = {
     // EECS 270
     '270-q1','270-q2','270-q3','270-q4','270-q5','270-q6','270-q7','270-q8','270-q9','270-q10',
     '270-p1','270-p1-signoff','270-p2a','270-p2b','270-p2a-signoff','270-p2b-signoff',
-    '270-p3-auto','270-p3-signoff','270-p4','270-exam1','270-q11',
+    '270-p3-auto','270-p3-signoff','270-p4','270-p5','270-exam1','270-q11',
     // EECS 370
     '370-p1a','370-p1m','370-p1s','370-p2a',
     '370-hw1','370-hw2',
