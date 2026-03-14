@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 12, 2026",
+  scrapeDate: "March 13, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -137,8 +137,8 @@ const APP_CONFIG = {
 
     // ===== EECS 442 - Homeworks =====
     { id: "442-hw1", name: "HW1: Faces", course: "eecs442", due: "2026-01-29", time: "5:29 PM", type: "homework", points: "120", hours: 10 },
-    { id: "442-hw2", name: "HW2: Filtering", course: "eecs442", due: "2026-02-05", time: "5:30 PM", type: "homework", points: "120", hours: 10 },
-    { id: "442-hw3", name: "HW3: Frequency", course: "eecs442", due: "2026-02-19", time: "5:30 PM", type: "homework", points: "120", hours: 10 },
+    { id: "442-hw2", name: "HW2: Filtering", course: "eecs442", due: "2026-02-05", time: "5:29 PM", type: "homework", points: "120", hours: 10 },
+    { id: "442-hw3", name: "HW3: Frequency", course: "eecs442", due: "2026-02-19", time: "5:29 PM", type: "homework", points: "120", hours: 10 },
     // EECS 442 - Quizzes
     { id: "442-q1", name: "Quiz 1 (02/02)", course: "eecs442", due: "2026-02-02", time: null, type: "quiz", points: "\u2014", hours: 0.5 },
     { id: "442-q2", name: "Quiz 2 (02/04)", course: "eecs442", due: "2026-02-04", time: null, type: "quiz", points: "\u2014", hours: 0.5 },
@@ -203,6 +203,7 @@ const APP_CONFIG = {
     { id: "s250-l12gw", name: "Lecture 12 GW", course: "stats250", due: "2026-03-09", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l13pw", name: "Lecture 13 PW", course: "stats250", due: "2026-03-11", time: "2:30 PM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l13gw", name: "Lecture 13 GW", course: "stats250", due: "2026-03-11", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
+    { id: "s250-l14pw", name: "Lecture 14 PW", course: "stats250", due: "2026-03-16", time: "2:30 PM", type: "lecture", points: "10", hours: 0.5 },
 
     // ===== TCHNCLCM 300 =====
     { id: "tc-survey", name: "Pre-Course Survey", course: "tc300", due: "2026-01-16", time: "11:59 PM", type: "assignment", points: "1", hours: 0.25 },
@@ -236,7 +237,7 @@ const APP_CONFIG = {
     // EECS 270
     '270-q1','270-q2','270-q3','270-q4','270-q5','270-q6','270-q7','270-q8','270-q9','270-q10',
     '270-p1','270-p1-signoff','270-p2a','270-p2b','270-p2a-signoff','270-p2b-signoff',
-    '270-p3-auto','270-p3-signoff','270-p4','270-p5','270-exam1','270-q11',
+    '270-p3-auto','270-p3-signoff','270-p4','270-p5','270-exam1','270-q11','270-q12',
     // EECS 370
     '370-p1a','370-p1m','370-p1s','370-p2a',
     '370-hw1','370-hw2',
