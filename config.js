@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 13, 2026",
+  scrapeDate: "March 15, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -126,11 +126,12 @@ const APP_CONFIG = {
     { id: "370-hw3", name: "Homework 3", course: "eecs370", due: "2026-03-23", time: "11:55 PM", type: "homework", points: "100", hours: 6, specUrl: "https://eecs370.github.io/homework/index.html" },
     { id: "370-hw4", name: "Homework 4", course: "eecs370", due: "2026-04-20", time: "11:55 PM", type: "homework", points: "100", hours: 6, specUrl: "https://eecs370.github.io/homework/index.html" },
     // EECS 370 - Pre-Labs
-    { id: "370-pl2", name: "Pre-Lab 2", course: "eecs370", due: "2026-01-22", time: "12:00 AM", type: "prelab", points: "7", hours: 1 },
-    { id: "370-pl3", name: "Pre-Lab 3", course: "eecs370", due: "2026-01-29", time: "12:00 AM", type: "prelab", points: "6", hours: 1 },
-    { id: "370-pl4", name: "Pre-Lab 4", course: "eecs370", due: "2026-02-05", time: "12:00 AM", type: "prelab", points: "4", hours: 1 },
-    { id: "370-pl5", name: "Pre-Lab 5", course: "eecs370", due: "2026-02-12", time: "12:00 AM", type: "prelab", points: "4", hours: 1 },
-    { id: "370-pl6", name: "Pre-Lab 6", course: "eecs370", due: "2026-02-19", time: "12:00 AM", type: "prelab", points: "5", hours: 1 },
+    { id: "370-pl2", name: "Pre-Lab 2", course: "eecs370", due: "2026-01-22", time: "11:55 PM", type: "prelab", points: "7", hours: 1 },
+    { id: "370-pl3", name: "Pre-Lab 3", course: "eecs370", due: "2026-01-29", time: "11:55 PM", type: "prelab", points: "6", hours: 1 },
+    { id: "370-pl4", name: "Pre-Lab 4", course: "eecs370", due: "2026-02-05", time: "11:55 PM", type: "prelab", points: "4", hours: 1 },
+    { id: "370-pl5", name: "Pre-Lab 5", course: "eecs370", due: "2026-02-12", time: "11:55 PM", type: "prelab", points: "4", hours: 1 },
+    { id: "370-pl6", name: "Pre-Lab 6", course: "eecs370", due: "2026-02-19", time: "11:55 PM", type: "prelab", points: "5", hours: 1 },
+    { id: "370-pl8", name: "Pre-Lab 8", course: "eecs370", due: "2026-03-19", time: "11:55 PM", type: "prelab", points: "5", hours: 1 },
     // EECS 370 - Exams
     { id: "370-midterm", name: "Midterm Exam", course: "eecs370", due: "2026-03-12", time: "7:00 PM", type: "exam", points: "100", hours: 12 },
     { id: "370-final", name: "Final Exam", course: "eecs370", due: "2026-04-23", time: "10:30 AM", type: "exam", points: "100", hours: 15 },
@@ -241,7 +242,8 @@ const APP_CONFIG = {
     // EECS 370
     '370-p1a','370-p1m','370-p1s','370-p2a',
     '370-hw1','370-hw2',
-    '370-pl2','370-pl3','370-pl4','370-pl5','370-pl6',
+    '370-pl2','370-pl3','370-pl4','370-pl5','370-pl6','370-pl8',
+    '370-midterm',
     // EECS 442
     '442-hw1','442-hw2','442-hw3',
     '442-q3','442-q4','442-q5','442-q6','442-q7',
@@ -253,10 +255,10 @@ const APP_CONFIG = {
     's250-l04pw','s250-l04gw','s250-l05pw','s250-l05gw',
     's250-l06gw','s250-l07pw','s250-l07gw',
     's250-l08pw','s250-l08gw','s250-l09pw',
-    's250-l11gw','s250-l12pw','s250-l12gw','s250-l13pw','s250-l13gw',
+    's250-l11gw','s250-l12pw','s250-l12gw','s250-l13pw','s250-l13gw','s250-l14pw',
     // TC 300
     'tc-survey','tc-syllabus','tc-w2','tc-w3','tc-resume-draft','tc-cover-draft','tc-annotated-job',
     'tc-w4','tc-w5','tc-revised-resume','tc-revised-cover','tc-portfolio-reflect',
-    'tc-w6','tc-topic-proposal','tc-w7','tc-report-outline',
+    'tc-w6','tc-topic-proposal','tc-w7','tc-w8-dataviz','tc-report-outline','tc-w10-presentation',
   ]
 };
