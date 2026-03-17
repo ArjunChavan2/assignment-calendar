@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 15, 2026",
+  scrapeDate: "March 17, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -177,7 +177,7 @@ const APP_CONFIG = {
     { id: "s250-lab7", name: "Lab 7", course: "stats250", due: "2026-04-03", time: "8:00 PM", type: "lab", points: "20", hours: 1.5 },
     // STATS 250 - Case Studies
     { id: "s250-cs1", name: "Case Study 1", course: "stats250", due: "2026-02-21", time: "8:00 PM", type: "casestudy", points: "40", hours: 3 },
-    { id: "s250-cs2", name: "Case Study 2", course: "stats250", due: "2026-03-21", time: "8:00 PM", type: "casestudy", points: "40", hours: 3 },
+    { id: "s250-cs2", name: "Case Study 2", course: "stats250", due: "2026-03-23", time: "8:00 PM", type: "casestudy", points: "40", hours: 3 },
     { id: "s250-cs3", name: "Case Study 3", course: "stats250", due: "2026-04-11", time: "8:00 PM", type: "casestudy", points: "40", hours: 3 },
     // STATS 250 - Exams
     { id: "s250-exam1", name: "Exam 1", course: "stats250", due: "2026-02-11", time: "6:00 PM", type: "exam", points: "75", hours: 8 },
@@ -249,7 +249,7 @@ const APP_CONFIG = {
     '442-q3','442-q4','442-q5','442-q6','442-q7',
     '442-midterm',
     // STATS 250
-    's250-ep01','s250-ep02','s250-ep03','s250-ep04',
+    's250-ep01','s250-ep02','s250-ep03','s250-ep04','s250-ep06',
     's250-lab1','s250-lab2','s250-lab3','s250-lab4','s250-lab5',
     's250-cs1','s250-exam1',
     's250-l04pw','s250-l04gw','s250-l05pw','s250-l05gw',
