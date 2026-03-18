@@ -75,7 +75,7 @@ const APP_CONFIG = {
   // due (YYYY-MM-DD), time (string or null), type, points, hours
   assignments: [
     // ===== EECS 270 - Projects =====
-    { id: "270-p1", name: "Project 1: Selector", course: "eecs270", due: "2026-01-20", time: "11:59 PM", type: "project", points: "50", hours: 6, specUrl: "https://umich.instructure.com/courses/815882/pages/project-1-selector" },
+    { id: "270-p1", name: "Project 1: Selector", course: "eecs270", due: "2026-01-23", time: "11:59 PM", type: "project", points: "50", hours: 6, specUrl: "https://umich.instructure.com/courses/815882/pages/project-1-selector" },
     { id: "270-p1-signoff", name: "Project 1 Signoff", course: "eecs270", due: "2026-01-23", time: "11:59 PM", type: "project", points: "3", hours: 0.5 },
     { id: "270-p2a", name: "Project 2A: Robot Control (Autograde)", course: "eecs270", due: "2026-02-06", time: "11:59 PM", type: "project", points: "25", hours: 5, specUrl: "https://umich.instructure.com/courses/815882/pages/project-2-robot-control" },
     { id: "270-p2b", name: "Project 2B: Robot Control (Autograde)", course: "eecs270", due: "2026-02-06", time: "11:59 PM", type: "project", points: "57", hours: 7, specUrl: "https://umich.instructure.com/courses/815882/pages/project-2-robot-control" },
@@ -133,28 +133,26 @@ const APP_CONFIG = {
     { id: "370-pl6", name: "Pre-Lab 6", course: "eecs370", due: "2026-02-19", time: "11:55 PM", type: "prelab", points: "5", hours: 1 },
     { id: "370-pl8", name: "Pre-Lab 8", course: "eecs370", due: "2026-03-19", time: "11:55 PM", type: "prelab", points: "5", hours: 1 },
     // EECS 370 - Exams
-    { id: "370-midterm", name: "Midterm Exam", course: "eecs370", due: "2026-03-12", time: "7:00 PM", type: "exam", points: "100", hours: 12 },
+    { id: "370-midterm", name: "Midterm Exam", course: "eecs370", due: "2026-02-24", time: "7:00 PM", type: "exam", points: "100", hours: 12 },
     { id: "370-final", name: "Final Exam", course: "eecs370", due: "2026-04-23", time: "10:30 AM", type: "exam", points: "100", hours: 15 },
 
     // ===== EECS 442 - Homeworks =====
     { id: "442-hw1", name: "HW1: Faces", course: "eecs442", due: "2026-01-29", time: "5:29 PM", type: "homework", points: "120", hours: 10 },
-    { id: "442-hw2", name: "HW2: Filtering", course: "eecs442", due: "2026-02-05", time: "5:29 PM", type: "homework", points: "120", hours: 10 },
+    { id: "442-hw2", name: "HW2: Filtering", course: "eecs442", due: "2026-02-05", time: "5:30 PM", type: "homework", points: "120", hours: 10 },
     { id: "442-hw3", name: "HW3: Frequency", course: "eecs442", due: "2026-02-19", time: "5:29 PM", type: "homework", points: "120", hours: 10 },
+    { id: "442-hw4", name: "HW4: Recognition", course: "eecs442", due: "2026-03-26", time: "11:59 PM", type: "homework", points: "120", hours: 10 },
     // EECS 442 - Quizzes
-    { id: "442-q1", name: "Quiz 1 (02/02)", course: "eecs442", due: "2026-02-02", time: null, type: "quiz", points: "\u2014", hours: 0.5 },
-    { id: "442-q2", name: "Quiz 2 (02/04)", course: "eecs442", due: "2026-02-04", time: null, type: "quiz", points: "\u2014", hours: 0.5 },
+    { id: "442-q1", name: "Quiz 1 (02/02)", course: "eecs442", due: "2026-02-02", time: null, type: "quiz", points: "—", hours: 0.5 },
+    { id: "442-q2", name: "Quiz 2 (02/04)", course: "eecs442", due: "2026-02-04", time: null, type: "quiz", points: "—", hours: 0.5 },
     { id: "442-q3", name: "Quiz 3 (02/09)", course: "eecs442", due: "2026-02-09", time: "11:33 AM", type: "quiz", points: "5", hours: 0.5 },
     { id: "442-q4", name: "Quiz 4 (02/11)", course: "eecs442", due: "2026-02-11", time: "11:46 AM", type: "quiz", points: "4", hours: 0.5 },
     { id: "442-q5", name: "Quiz 5 (02/16)", course: "eecs442", due: "2026-02-16", time: "11:43 AM", type: "quiz", points: "2", hours: 0.5 },
     { id: "442-q6", name: "Quiz 6 (02/18)", course: "eecs442", due: "2026-02-18", time: "11:49 AM", type: "quiz", points: "5", hours: 0.5 },
-    // EECS 442 - Quizzes (continued)
     { id: "442-q7", name: "Quiz 7 (03/09)", course: "eecs442", due: "2026-03-09", time: "11:53 AM", type: "quiz", points: "5", hours: 0.5 },
     { id: "442-q8", name: "Quiz 8 (03/11)", course: "eecs442", due: "2026-03-11", time: "11:55 AM", type: "quiz", points: "5", hours: 0.5 },
+    { id: "442-q9", name: "Quiz 9 (03/16)", course: "eecs442", due: "2026-03-16", time: "11:39 AM", type: "quiz", points: "5", hours: 0.5 },
     // EECS 442 - Exams
-    { id: "442-midterm", name: "Midterm Evaluation", course: "eecs442", due: "2026-03-14", time: "11:59 PM", type: "exam", points: "\u2014", hours: 12 },
-
-    // EECS 442 - HW (continued)
-    { id: "442-hw4", name: "HW4: Recognition", course: "eecs442", due: "2026-03-26", time: "11:59 PM", type: "homework", points: "120", hours: 10 },
+    { id: "442-midterm", name: "Midterm Evaluation", course: "eecs442", due: "2026-03-14", time: "11:59 PM", type: "exam", points: "—", hours: 12 },
 
     // ===== STATS 250 - EPs =====
     { id: "s250-ep01", name: "EP 01", course: "stats250", due: "2026-01-23", time: "1:00 PM", type: "ep", points: "40", hours: 2 },
@@ -188,23 +186,24 @@ const APP_CONFIG = {
     { id: "s250-l04gw", name: "Lecture 04 GW", course: "stats250", due: "2026-01-26", time: "3:20 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l05pw", name: "Lecture 05 PW", course: "stats250", due: "2026-01-28", time: "4:00 PM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l05gw", name: "Lecture 05 GW", course: "stats250", due: "2026-01-28", time: "3:20 PM", type: "lecture", points: "20", hours: 0.5 },
-    { id: "s250-l06pw", name: "Lecture 06 PW", course: "stats250", due: "2026-02-02", time: "8:00 AM", type: "lecture", points: "\u2014", hours: 0.5 },
+    { id: "s250-l06pw", name: "Lecture 06 PW", course: "stats250", due: "2026-02-02", time: "8:00 AM", type: "lecture", points: "—", hours: 0.5 },
     { id: "s250-l06gw", name: "Lecture 06 GW", course: "stats250", due: "2026-02-02", time: "3:20 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l07pw", name: "Lecture 07 PW", course: "stats250", due: "2026-02-04", time: "4:00 PM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l07gw", name: "Lecture 07 GW", course: "stats250", due: "2026-02-04", time: "3:20 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l08pw", name: "Lecture 08 PW", course: "stats250", due: "2026-02-17", time: "8:00 AM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l08gw", name: "Lecture 08 GW", course: "stats250", due: "2026-02-16", time: "3:20 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l09pw", name: "Lecture 09 PW", course: "stats250", due: "2026-02-18", time: "4:00 PM", type: "lecture", points: "10", hours: 0.5 },
-    { id: "s250-l09gw", name: "Lecture 09 GW", course: "stats250", due: "2026-02-18", time: "3:20 PM", type: "lecture", points: "\u2014", hours: 0.5 },
-    { id: "s250-l10pw", name: "Lecture 10 PW", course: "stats250", due: "2026-02-23", time: "8:00 AM", type: "lecture", points: "\u2014", hours: 0.5 },
-    { id: "s250-l10gw", name: "Lecture 10 GW", course: "stats250", due: "2026-02-23", time: "3:20 PM", type: "lecture", points: "\u2014", hours: 0.5 },
-    { id: "s250-l11pw", name: "Lecture 11 PW", course: "stats250", due: "2026-02-25", time: "8:00 AM", type: "lecture", points: "\u2014", hours: 0.5 },
-    { id: "s250-l11gw", name: "Lecture 11 GW", course: "stats250", due: "2026-02-25", time: "3:20 PM", type: "lecture", points: "\u2014", hours: 0.5 },
+    { id: "s250-l09gw", name: "Lecture 09 GW", course: "stats250", due: "2026-02-18", time: "3:20 PM", type: "lecture", points: "—", hours: 0.5 },
+    { id: "s250-l10pw", name: "Lecture 10 PW", course: "stats250", due: "2026-02-23", time: "8:00 AM", type: "lecture", points: "—", hours: 0.5 },
+    { id: "s250-l10gw", name: "Lecture 10 GW", course: "stats250", due: "2026-02-23", time: "3:20 PM", type: "lecture", points: "—", hours: 0.5 },
+    { id: "s250-l11pw", name: "Lecture 11 PW", course: "stats250", due: "2026-02-25", time: "8:00 AM", type: "lecture", points: "—", hours: 0.5 },
+    { id: "s250-l11gw", name: "Lecture 11 GW", course: "stats250", due: "2026-02-25", time: "3:20 PM", type: "lecture", points: "—", hours: 0.5 },
     { id: "s250-l12pw", name: "Lecture 12 PW", course: "stats250", due: "2026-03-09", time: "2:30 PM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l12gw", name: "Lecture 12 GW", course: "stats250", due: "2026-03-09", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l13pw", name: "Lecture 13 PW", course: "stats250", due: "2026-03-11", time: "2:30 PM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l13gw", name: "Lecture 13 GW", course: "stats250", due: "2026-03-11", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l14pw", name: "Lecture 14 PW", course: "stats250", due: "2026-03-16", time: "2:30 PM", type: "lecture", points: "10", hours: 0.5 },
+    { id: "s250-l14gw", name: "Lecture 14 GW", course: "stats250", due: "2026-03-16", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
 
     // ===== TCHNCLCM 300 =====
     { id: "tc-survey", name: "Pre-Course Survey", course: "tc300", due: "2026-01-16", time: "11:59 PM", type: "assignment", points: "1", hours: 0.25 },
@@ -215,7 +214,7 @@ const APP_CONFIG = {
     { id: "tc-cover-draft", name: "Cover Letter Draft", course: "tc300", due: "2026-01-23", time: "11:59 PM", type: "assignment", points: "10", hours: 3 },
     { id: "tc-annotated-job", name: "Annotated Job Ad", course: "tc300", due: "2026-01-23", time: "11:59 PM", type: "assignment", points: "10", hours: 2 },
     { id: "tc-w4", name: "Week 4 - STAR Method", course: "tc300", due: "2026-01-29", time: "11:59 PM", type: "assignment", points: "2", hours: 1 },
-    { id: "tc-w5", name: "Week 5 - Revision Group", course: "tc300", due: "2026-02-05", time: "11:59 PM", type: "assignment", points: "\u2014", hours: 1 },
+    { id: "tc-w5", name: "Week 5 - Revision Group", course: "tc300", due: "2026-02-05", time: "11:59 PM", type: "assignment", points: "2", hours: 1 },
     { id: "tc-revised-resume", name: "Revised Resume", course: "tc300", due: "2026-02-06", time: "11:59 PM", type: "assignment", points: "20", hours: 4 },
     { id: "tc-revised-cover", name: "Revised Cover Letter", course: "tc300", due: "2026-02-06", time: "11:59 PM", type: "assignment", points: "20", hours: 4 },
     { id: "tc-portfolio-reflect", name: "Career Portfolio Reflection", course: "tc300", due: "2026-02-06", time: "11:59 PM", type: "assignment", points: "30", hours: 3 },
@@ -228,6 +227,7 @@ const APP_CONFIG = {
     { id: "tc-report-draft", name: "Written Report Draft", course: "tc300", due: "2026-03-19", time: "11:30 AM", type: "assignment", points: "30", hours: 8 },
     { id: "tc-oral-proposal", name: "Oral Report Topic Proposal", course: "tc300", due: "2026-03-20", time: "11:59 PM", type: "assignment", points: "10", hours: 2 },
     { id: "tc-final-report", name: "Final Written Report", course: "tc300", due: "2026-03-27", time: "11:59 PM", type: "assignment", points: "75", hours: 10 },
+    { id: "tc-oral-slides", name: "Oral Presentation Draft Slides", course: "tc300", due: "2026-04-02", time: "11:30 AM", type: "assignment", points: "10", hours: 3 },
     { id: "tc-ec-originpro", name: "EC: OriginPro Familiarizing", course: "tc300", due: "2026-04-24", time: "11:59 PM", type: "assignment", points: "EC", hours: 2 },
   ],
 
@@ -236,29 +236,26 @@ const APP_CONFIG = {
   // Remove or edit these for your own courses.
   autoCompleted: [
     // EECS 270
-    '270-q1','270-q2','270-q3','270-q4','270-q5','270-q6','270-q7','270-q8','270-q9','270-q10',
-    '270-p1','270-p1-signoff','270-p2a','270-p2b','270-p2a-signoff','270-p2b-signoff',
-    '270-p3-auto','270-p3-signoff','270-p4','270-p5','270-exam1','270-q11','270-q12',
+    '270-q1','270-q2','270-q3','270-q4','270-q5','270-q6',
+    '270-q7','270-q8','270-q9','270-q10','270-p1','270-p1-signoff',
+    '270-p2a','270-p2b','270-p2a-signoff','270-p2b-signoff','270-p3-auto','270-p3-signoff',
+    '270-p4','270-p5','270-exam1','270-q11','270-q12',
     // EECS 370
-    '370-p1a','370-p1m','370-p1s','370-p2a',
-    '370-hw1','370-hw2',
+    '370-p1a','370-p1m','370-p1s','370-p2a','370-hw1','370-hw2',
     '370-pl2','370-pl3','370-pl4','370-pl5','370-pl6','370-pl8',
     '370-midterm',
     // EECS 442
-    '442-hw1','442-hw2','442-hw3',
-    '442-q3','442-q4','442-q5','442-q6','442-q7',
-    '442-midterm',
+    '442-hw1','442-hw2','442-hw3','442-q3','442-q4','442-q5',
+    '442-q6','442-q7','442-midterm',
     // STATS 250
-    's250-ep01','s250-ep02','s250-ep03','s250-ep04','s250-ep06',
-    's250-lab1','s250-lab2','s250-lab3','s250-lab4','s250-lab5',
-    's250-cs1','s250-exam1',
-    's250-l04pw','s250-l04gw','s250-l05pw','s250-l05gw',
-    's250-l06gw','s250-l07pw','s250-l07gw',
-    's250-l08pw','s250-l08gw','s250-l09pw',
-    's250-l11gw','s250-l12pw','s250-l12gw','s250-l13pw','s250-l13gw','s250-l14pw',
+    's250-ep01','s250-ep02','s250-ep03','s250-ep04','s250-ep06','s250-lab1',
+    's250-lab2','s250-lab3','s250-lab4','s250-lab5','s250-cs1','s250-exam1',
+    's250-l04pw','s250-l04gw','s250-l05pw','s250-l05gw','s250-l06gw','s250-l07pw',
+    's250-l07gw','s250-l08pw','s250-l08gw','s250-l09pw','s250-l11gw','s250-l12pw',
+    's250-l12gw','s250-l13pw','s250-l13gw','s250-l14pw',
     // TC 300
-    'tc-survey','tc-syllabus','tc-w2','tc-w3','tc-resume-draft','tc-cover-draft','tc-annotated-job',
-    'tc-w4','tc-w5','tc-revised-resume','tc-revised-cover','tc-portfolio-reflect',
+    'tc-survey','tc-syllabus','tc-w2','tc-w3','tc-resume-draft','tc-cover-draft',
+    'tc-annotated-job','tc-w4','tc-w5','tc-revised-resume','tc-revised-cover','tc-portfolio-reflect',
     'tc-w6','tc-topic-proposal','tc-w7','tc-w8-dataviz','tc-report-outline','tc-w10-presentation',
   ]
 };

@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment Calendar</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<!-- User config (courses, assignments, Firebase credentials) -->
+<script src="config.js"></script>
+<style>
+  :root {
+    --done: #16a34a;
+    --done-bg: #dcfce7;
+    --gray: #6b7280;
+    --border: #e5e7eb;
+    --bg: #f9fafb;
+    --text: #1f2937;
+    --card: #fff;
+    --hover-bg: #f3f4f6;
+    --header-bg: #fff;
+    --active-btn: #1f2937;
+    --active-btn-text: #fff;
+    --shadow: rgba(0,0,0,0.08);
+  }
+  [data-theme="dark"] {
+    --done: #4ade80;
+    --done-bg: #14532d;
+    --gray: #9ca3af;
+    --border: #374151;
+    --bg: #111827;
+    --text: #f3f4f6;
+    --card: #1f2937;
+    --hover-bg: #374151;
+    --header-bg: #1f2937;
+    --active-btn: #e5e7eb;
+    --active-btn-text: #111827;
+    --shadow: rgba(0,0,0,0.3);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* Auth Banner */
+  .auth-banner {
+    background: #fef3c7;
+    border-bottom: 2px solid #f59e0b;
+    padding: 10px 24px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: #92400e;
+  }
+  .auth-banner.show { display: flex; }
+  .auth-banner .icon { font-size: 1.2rem; }
+  .auth-banner .msg { flex: 1; }
+  .auth-banner a {
+    color: #92400e;
+    font-weight: 600;
+    text-decoration: underline;
+    margin: 0 4px;
+  }
+  .auth-banner .check-btn {
+    padding: 4px 12px;
+    background: #f59e0b;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .auth-banner .check-btn:hover { background: #d97706; }
+  .auth-banner .dismiss-btn {
+    background: none;
+    border: none;
+    color: #92400e;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 4px;
+  }
+  .auth-ok-banner {
+    background: #dcfce7;
+    border-bottom: 2px solid #16a34a;
+    padding: 10px 24px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: #166534;
+  }
+  .auth-ok-banner.show { display: flex; }
+  .auth-ok-banner .icon { font-size: 1.2rem; }
+  .auth-ok-banner .msg { flex: 1; }
+  .auth-ok-banner .dismiss-btn {
+    background: none;
+    border: none;
+    color: #166534;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 4px;
+  }
+
+  header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-wrap: wrap;
+    gap: 8px;
+    transition: background 0.3s;
+  }
+  header h1 { font-size: 1.25rem; font-weight: 700; }
+  header .subtitle { color: var(--gray); font-size: 0.8rem; margin-top: 2px; }
+  .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .controls button {
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+  }
+  .controls button:hover { background: var(--hover-bg); }
+  .controls button.active { background: var(--active-btn); color: var(--active-btn-text); border-color: var(--active-btn); }
+  .nav-btns { display: flex; gap: 4px; }
+  .nav-btns button { padding: 5px 9px; font-size: 1rem; }
+  .month-label { font-weight: 600; min-width: 140px; text-align: center; font-size: 0.9rem; }
+  .legend {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 0.75rem;
+  }
+  .legend-item { display: flex; align-items: center; gap: 3px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Calendar Grid */
+  .calendar-container { padding: 16px; max-width: 1200px; margin: 0 auto; }
+  .weekday-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-bottom: 4px;
+    padding: 6px 0;
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .day-cell {
+    background: var(--card);
+    border: 1px solid var(--border);
+    min-height: 100px;
+    padding: 3px;
+    border-radius: 6px;
+    transition: box-shadow 0.15s, background 0.3s;
+    overflow: hidden;
+  }
+  .day-cell:hover { box-shadow: 0 2px 8px var(--shadow); }
+  .day-cell.today { border: 2px solid #2563eb; }
+  .day-cell.other-month { opacity: 0.3; }
+  .day-num {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 1px 3px;
+    color: var(--gray);
+  }
+  .day-cell.today .day-num {
+    background: #2563eb;
+    color: #fff;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .assignment-chip {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin: 1px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    transition: all 0.15s;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+  .assignment-chip:hover { filter: brightness(0.93); transform: scale(1.02); }
+  .assignment-chip.done { background: var(--done-bg); color: var(--done); text-decoration: line-through; opacity: 0.6; }
+  .assignment-chip .check {
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    border: 1.5px solid currentColor;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+  }
+  .assignment-chip.done .check { background: var(--done); color: #fff; border-color: var(--done); }
+
+  /* List View */
+  .list-container { padding: 24px; max-width: 900px; margin: 0 auto; display: none; }
+  .list-section { margin-bottom: 32px; }
+  .list-section h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+  .list-section h2.overdue { color: #dc2626; }
+  .list-section h2.upcoming { color: #2563eb; }
+  .list-section h2.completed-header { color: var(--done); }
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .list-item:hover { box-shadow: 0 2px 8px var(--shadow); }
+  .list-item.done { opacity: 0.55; }
+  .list-item .checkbox {
+    width: 20px; height: 20px;
+    border-radius: 4px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    transition: all 0.15s;
+  }
+  .list-item.done .checkbox { background: var(--done); border-color: var(--done); color: #fff; }
+  .list-item .info { flex: 1; }
+  .list-item .name { font-weight: 600; font-size: 0.9rem; }
+  .list-item.done .name { text-decoration: line-through; }
+  .list-item .meta { font-size: 0.8rem; color: var(--gray); margin-top: 2px; }
+  .list-item .course-tag {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .stats { display: flex; gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    flex: 1;
+    text-align: center;
+    transition: background 0.3s;
+  }
+  .stat-card .num { font-size: 1.5rem; font-weight: 700; }
+  .stat-card .label { font-size: 0.75rem; color: var(--gray); margin-top: 4px; }
+
+  .filter-btns { display: flex; gap: 4px; }
+  .filter-btns button { font-size: 0.75rem; padding: 3px 8px; }
+
+  /* Dark Mode Toggle */
+  .dark-toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .dark-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s, background 0.3s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  [data-theme="dark"] .dark-toggle { background: #4f46e5; }
+  [data-theme="dark"] .dark-toggle::after {
+    transform: translateX(20px);
+    background: #1e1b4b;
+  }
+  .theme-icon { font-size: 0.85rem; margin-right: 2px; }
+  [data-theme="dark"] .auth-banner { background: #422006; border-color: #b45309; color: #fbbf24; }
+  [data-theme="dark"] .auth-banner a { color: #fbbf24; }
+  [data-theme="dark"] .auth-banner .check-btn { background: #b45309; }
+  [data-theme="dark"] .auth-banner .dismiss-btn { color: #fbbf24; }
+  [data-theme="dark"] .auth-ok-banner { background: #14532d; border-color: #16a34a; color: #86efac; }
+  [data-theme="dark"] .auth-ok-banner .dismiss-btn { color: #86efac; }
+  [data-theme="dark"] .list-section h2 { border-bottom-color: var(--border); }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    max-width: 340px;
+    max-height: 480px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 16px var(--shadow);
+    pointer-events: auto;
+  }
+  .tooltip.show { display: block; }
+  .tooltip-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: var(--text); }
+  .tooltip-row { font-size: 0.8rem; margin: 4px 0; color: var(--gray); }
+  .tooltip-row strong { color: var(--text); }
+  .tooltip-link {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: #2563eb;
+    color: #fff;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+  }
+  .tooltip-link:hover { background: #1d4ed8; }
+  [data-theme="dark"] .tooltip-link { background: #3b82f6; }
+  [data-theme="dark"] .tooltip-link:hover { background: #2563eb; }
+
+  /* Study plan inside tooltip */
+  .study-plan { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
+  .study-plan-header { font-weight: 700; font-size: 0.8rem; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+  .study-plan-header::before { content: '\1F4D6'; font-size: 0.85rem; }
+  .study-plan-step {
+    display: flex; gap: 8px; font-size: 0.75rem; margin: 5px 0; color: var(--gray);
+    align-items: flex-start;
+  }
+  .study-plan-step .sp-day {
+    flex-shrink: 0; min-width: 62px; font-weight: 600; color: var(--text);
+    font-size: 0.7rem; padding: 2px 5px; background: var(--bg); border-radius: 4px; text-align: center;
+  }
+  .study-plan-step .sp-task { flex: 1; line-height: 1.35; }
+  .study-plan-step .sp-hours {
+    flex-shrink: 0; font-size: 0.65rem; color: #2563eb; font-weight: 600;
+    background: #eff6ff; padding: 1px 5px; border-radius: 3px; white-space: nowrap;
+  }
+  [data-theme="dark"] .study-plan-step .sp-hours { background: #1e3a5f; color: #93c5fd; }
+  .study-plan-step.sp-past { opacity: 0.45; text-decoration: line-through; }
+  .study-plan-step.sp-today { background: #fefce8; border-radius: 4px; padding: 2px; }
+  [data-theme="dark"] .study-plan-step.sp-today { background: #422006; }
+  .study-plan-note { font-size: 0.7rem; color: var(--gray); margin-top: 6px; font-style: italic; }
+
+  /* Edit modal */
+  .edit-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 2000; font-family: inherit;
+  }
+  .edit-modal.show { display: flex; align-items: center; justify-content: center; }
+  .edit-modal-backdrop {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4); z-index: 1;
+  }
+  .edit-modal-content {
+    position: relative; z-index: 2; background: var(--card); border-radius: 12px;
+    box-shadow: 0 10px 40px var(--shadow); max-width: 480px; width: 92%;
+    max-height: 90vh; display: flex; flex-direction: column;
+  }
+  .edit-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px; border-bottom: 1px solid var(--border);
+  }
+  .edit-modal-header h2 { margin: 0; font-size: 1.05rem; color: var(--text); }
+  .edit-modal-close {
+    background: none; border: none; font-size: 1.4rem; cursor: pointer;
+    color: var(--gray); width: 30px; height: 30px; display: flex;
+    align-items: center; justify-content: center; border-radius: 6px; transition: background 0.15s;
+  }
+  .edit-modal-close:hover { background: var(--hover-bg, #f3f4f6); }
+  .edit-modal-body { padding: 18px 20px; flex: 1; overflow-y: auto; }
+  .edit-modal-footer {
+    display: flex; align-items: center; gap: 8px; justify-content: flex-end;
+    padding: 14px 20px; border-top: 1px solid var(--border);
+  }
+  .edit-modal-footer .btn-danger-left { margin-right: auto; }
+  .form-group { margin-bottom: 14px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-group label {
+    display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; color: var(--text);
+  }
+  .form-group input, .form-group select {
+    width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg); color: var(--text); font-family: inherit; font-size: 0.85rem;
+    box-sizing: border-box; transition: border-color 0.15s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
+  }
+  .btn-primary, .btn-secondary, .btn-danger {
+    padding: 7px 16px; border-radius: 6px; border: none; font-weight: 600;
+    font-size: 0.85rem; cursor: pointer; transition: background 0.15s;
+  }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { opacity: 0.8; }
+  .btn-danger { background: #fecaca; color: #dc2626; }
+  .btn-danger:hover { background: #fca5a5; }
+  [data-theme="dark"] .btn-primary { background: #3b82f6; }
+  [data-theme="dark"] .btn-primary:hover { background: #2563eb; }
+  [data-theme="dark"] .btn-danger { background: #4c1d1d; color: #fca5a5; }
+  [data-theme="dark"] .btn-danger:hover { background: #5f2f2f; }
+  [data-theme="dark"] .edit-modal-close:hover { background: #374151; }
+
+  /* Edit mode UI */
+  .edit-mode-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 0.8rem; cursor: pointer; color: var(--text); transition: all 0.15s; }
+  .edit-mode-btn:hover { background: var(--border); }
+  .edit-mode-btn.active { background: #fef3c7; border-color: #f59e0b; color: #92400e; }
+  [data-theme="dark"] .edit-mode-btn.active { background: #422006; border-color: #d97706; color: #fbbf24; }
+  .add-btn { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: none; transition: background 0.15s; }
+  .add-btn:hover { background: #1d4ed8; }
+  [data-theme="dark"] .add-btn { background: #3b82f6; }
+  [data-theme="dark"] .add-btn:hover { background: #2563eb; }
+  .chip-edit-icon {
+    display: none; position: absolute; top: -4px; right: -4px; width: 16px; height: 16px;
+    background: #f59e0b; color: #fff; border-radius: 50%; font-size: 9px;
+    align-items: center; justify-content: center; pointer-events: none;
+  }
+  .edit-active .chip-edit-icon { display: flex; }
+  .edit-active .assignment-chip { position: relative; cursor: pointer; }
+  .list-item-edit-icon { display: none; margin-left: auto; font-size: 0.75rem; color: #f59e0b; cursor: pointer; }
+  .edit-active .list-item-edit-icon { display: inline; }
+
+  .data-age {
+    font-size: 0.7rem;
+    color: var(--gray);
+    text-align: center;
+    padding: 8px;
+  }
+
+  /* Sync status indicator */
+  .sync-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--gray);
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .sync-indicator:hover {
+    border-color: var(--accent, #2563eb);
+    background: var(--hover, #f0f4ff);
+  }
+  .sync-indicator.scraping {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  .sync-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #9ca3af;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .sync-dot.synced { background: #16a34a; }
+  .sync-dot.syncing { background: #f59e0b; animation: pulse 1s infinite; }
+  .sync-dot.error { background: #dc2626; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Workload Heatmap bar on calendar cells */
+  .heat-bar {
+    height: 3px;
+    border-radius: 2px;
+    margin: 1px 2px 2px;
+    transition: width 0.3s;
+  }
+  .heat-0 { background: transparent; }
+  .heat-low  { background: #86efac; width: 33%; }
+  .heat-med  { background: #fb923c; width: 66%; }
+  .heat-high { background: #ef4444; width: 100%; }
+  [data-theme="dark"] .heat-low  { background: #166534; }
+  [data-theme="dark"] .heat-med  { background: #9a3412; }
+  [data-theme="dark"] .heat-high { background: #991b1b; }
+
+  /* Workload badges on chips (replaces priority badges) */
+  .workload-low  { background: #d1fae5; color: #059669; }
+  .workload-med  { background: #fed7aa; color: #ea580c; }
+  .workload-high { background: #fecaca; color: #dc2626; }
+  [data-theme="dark"] .workload-low  { background: #064e3b; color: #6ee7b7; }
+  [data-theme="dark"] .workload-med  { background: #431a04; color: #fdba74; }
+  [data-theme="dark"] .workload-high { background: #4c1d1d; color: #fca5a5; }
+
+  /* Priority badges */
+  .priority-badge {
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 0px 3px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+    line-height: 1.3;
+  }
+  .priority-high { background: #fecaca; color: #dc2626; }
+  .priority-med { background: #fed7aa; color: #ea580c; }
+  .priority-low { background: #d1fae5; color: #059669; }
+  [data-theme="dark"] .priority-high { background: #4c1d1d; color: #fca5a5; }
+  [data-theme="dark"] .priority-med { background: #431a04; color: #fdba74; }
+  [data-theme="dark"] .priority-low { background: #064e3b; color: #6ee7b7; }
+  .list-item .priority-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  /* Panic mode */
+  .panic-banner {
+    background: #fecaca;
+    border-bottom: 2px solid #dc2626;
+    padding: 10px 24px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: #991b1b;
+    animation: panic-pulse 1.5s infinite;
+  }
+  .panic-banner.show { display: flex; }
+  .panic-banner .icon { font-size: 1.4rem; }
+  .panic-banner .msg { flex: 1; }
+  .panic-banner .dismiss-btn { background: none; border: none; color: #991b1b; cursor: pointer; font-size: 1.1rem; }
+  [data-theme="dark"] .panic-banner { background: #4c1d1d; border-color: #f87171; color: #fca5a5; }
+  [data-theme="dark"] .panic-banner .dismiss-btn { color: #fca5a5; }
+  @keyframes panic-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+  .assignment-chip.panic-item {
+    animation: panic-glow 1.2s infinite;
+    box-shadow: 0 0 6px rgba(220,38,38,0.5);
+  }
+  .list-item.panic-item {
+    border-color: #dc2626;
+    box-shadow: 0 0 8px rgba(220,38,38,0.3);
+    animation: panic-glow 1.2s infinite;
+  }
+  @keyframes panic-glow {
+    0%, 100% { box-shadow: 0 0 4px rgba(220,38,38,0.3); }
+    50% { box-shadow: 0 0 12px rgba(220,38,38,0.6); }
+  }
+
+  /* Hours badge in list view */
+  .hours-badge {
+    font-size: 0.7rem;
+    color: var(--gray);
+    white-space: nowrap;
+  }
+  .hours-badge strong { color: var(--text); }
+
+  /* Heatmap legend under calendar */
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: var(--gray);
+    margin-top: 6px;
+  }
+  .heatmap-legend .swatch {
+    width: 14px; height: 8px;
+    border-radius: 2px;
+  }
+
+  /* Daily View */
+  .daily-container { padding: 24px; max-width: 700px; margin: 0 auto; display: none; }
+  .daily-header {
+    font-size: 1.1rem; font-weight: 700; color: var(--text);
+    margin-bottom: 6px;
+  }
+  .daily-subheader {
+    font-size: 0.8rem; color: var(--gray); margin-bottom: 20px;
+  }
+  .daily-section { margin-bottom: 28px; }
+  .daily-section-title {
+    font-size: 0.9rem; font-weight: 700; margin-bottom: 10px;
+    padding-bottom: 6px; border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .daily-section-title .section-icon { font-size: 1rem; }
+  .daily-section-title .section-count {
+    font-size: 0.7rem; font-weight: 600; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px;
+    color: var(--gray);
+  }
+  .daily-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
+  }
+  .daily-item:hover { box-shadow: 0 2px 8px var(--shadow); }
+  .daily-item.done { opacity: 0.5; }
+  .daily-item .daily-check {
+    width: 20px; height: 20px; border-radius: 4px;
+    border: 2px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; transition: all 0.15s;
+  }
+  .daily-item.done .daily-check { background: var(--done); border-color: var(--done); color: #fff; }
+  .daily-item .daily-info { flex: 1; min-width: 0; }
+  .daily-item .daily-name { font-weight: 600; font-size: 0.88rem; }
+  .daily-item.done .daily-name { text-decoration: line-through; }
+  .daily-item .daily-meta { font-size: 0.78rem; color: var(--gray); margin-top: 2px; }
+  .daily-item .daily-time-badge {
+    font-size: 0.72rem; font-weight: 600; color: #2563eb;
+    background: #eff6ff; padding: 3px 8px; border-radius: 4px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  [data-theme="dark"] .daily-item .daily-time-badge { background: #1e3a5f; color: #93c5fd; }
+  .daily-item .course-tag {
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 999px;
+    font-weight: 600; white-space: nowrap; flex-shrink: 0;
+  }
+  .daily-empty {
+    text-align: center; padding: 40px 20px; color: var(--gray);
+    font-size: 0.9rem;
+  }
+  .daily-empty .empty-icon { font-size: 2rem; margin-bottom: 8px; }
+  .daily-summary {
+    display: flex; gap: 12px; margin-bottom: 20px;
+  }
+  .daily-summary-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; flex: 1; text-align: center;
+  }
+  .daily-summary-card .ds-num { font-size: 1.3rem; font-weight: 700; }
+  .daily-summary-card .ds-label { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
+  .daily-study-parent {
+    font-size: 0.72rem; color: var(--gray); font-weight: 600;
+    margin-top: 1px;
+  }
+  .daily-study-parent a {
+    color: var(--gray); text-decoration: underline; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- Auth Check Banners -->
+<div class="auth-banner" id="authBanner">
+  <span class="icon">&#9888;</span>
+  <span class="msg" id="authMsg">
+    <strong>Session check:</strong> Your assignment data was last scraped on <span id="lastScraped"></span>.
+    If data looks stale, re-authenticate on your course platforms.
+  </span>
+  <button class="check-btn" onclick="checkAuth()">Check Now</button>
+  <button class="dismiss-btn" onclick="dismissAuth()">&times;</button>
+</div>
+<div class="auth-ok-banner" id="authOkBanner">
+  <span class="icon">&#10003;</span>
+  <span class="msg"><strong>Auth check passed!</strong> Course platforms are reachable. Data scraped <span id="lastScrapedOk"></span>.</span>
+  <button class="dismiss-btn" onclick="document.getElementById('authOkBanner').classList.remove('show')">&times;</button>
+</div>
+
+<div class="panic-banner" id="panicBanner">
+  <span class="icon">&#9888;</span>
+  <span class="msg" id="panicMsg"><strong>PANIC MODE:</strong> Multiple incomplete assignments due soon!</span>
+  <button class="dismiss-btn" onclick="document.getElementById('panicBanner').classList.remove('show')">&times;</button>
+</div>
+
+<header>
+  <div>
+    <h1 id="appTitle">Assignment Calendar</h1>
+    <div class="subtitle" id="appSubtitle"></div>
+  </div>
+  <div class="controls">
+    <div class="legend" id="legendContainer"></div>
+    <div class="filter-btns" id="filterContainer"></div>
+    <div class="nav-btns">
+      <button onclick="changeMonth(-1)">&lsaquo;</button>
+      <span class="month-label" id="monthLabel"></span>
+      <button onclick="changeMonth(1)">&rsaquo;</button>
+    </div>
+    <button onclick="goToday()">Today</button>
+    <button id="viewToggle" onclick="toggleView()">List View</button>
+    <button id="dailyToggle" onclick="switchToDaily()">Daily</button>
+    <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()" title="Toggle edit mode">&#9998; Edit</button>
+    <button class="add-btn" id="addBtn" onclick="openAddModal()" title="Add assignment">+ Add</button>
+    <div style="display:flex;align-items:center;gap:4px;">
+      <span class="theme-icon" id="themeIcon">&#9788;</span>
+      <button class="dark-toggle" onclick="toggleTheme()" id="darkToggle" title="Toggle dark mode"></button>
+    </div>
+    <div class="sync-indicator" id="syncIndicator" title="Click to re-scrape assignments" onclick="triggerScrape()">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">Offline</span>
+    </div>
+  </div>
+</header>
+
+<div class="calendar-container" id="calendarView">
+  <div class="weekday-header">
+    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+  </div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+  <div class="data-age" id="dataAgeCalendar"></div>
+</div>
+
+<div class="list-container" id="listView">
+  <div class="stats" id="stats"></div>
+  <div id="listContent"></div>
+  <div class="data-age" id="dataAgeList"></div>
+</div>
+
+<div class="daily-container" id="dailyView">
+  <div id="dailyContent"></div>
+  <div class="data-age" id="dataAgeDaily"></div>
+</div>
+
+<div class="tooltip" id="tooltip" onmouseenter="cancelHideTooltip()" onmouseleave="hideTooltip()"></div>
+
+<script>
+// ========== DERIVED FROM CONFIG ==========
+const courses = APP_CONFIG.courses;
+const assignments = APP_CONFIG.assignments;
+const courseNames = {};
+for (const [id, c] of Object.entries(courses)) {
+  courseNames[id] = c.name;
+}
+
+// ========== INJECT DYNAMIC COURSE CSS ==========
+(function injectCourseStyles() {
+  const style = document.createElement('style');
+  let css = ':root {\n';
+  for (const [id, c] of Object.entries(courses)) {
+    css += `  --${id}: ${c.color}; --${id}-bg: ${c.bg};\n`;
+  }
+  css += '}\n[data-theme="dark"] {\n';
+  for (const [id, c] of Object.entries(courses)) {
+    css += `  --${id}: ${c.darkColor}; --${id}-bg: ${c.darkBg};\n`;
+  }
+  css += '}\n';
+  // Chip styles per course
+  for (const id of Object.keys(courses)) {
+    css += `.assignment-chip.${id} { background: var(--${id}-bg); color: var(--${id}); }\n`;
+    css += `.list-item .course-tag.${id} { background: var(--${id}-bg); color: var(--${id}); }\n`;
+  }
+  // Filter button on-styles
+  for (const id of Object.keys(courses)) {
+    css += `.filter-btns button.f-on-${id} { background: var(--${id}-bg); color: var(--${id}); border-color: var(--${id}); }\n`;
+  }
+  css += `.filter-btns button.f-off { background: var(--hover-bg); color: #9ca3af; border-color: var(--border); }\n`;
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
+
+// ========== POPULATE DYNAMIC ELEMENTS ==========
+(function populateUI() {
+  // Title & subtitle
+  document.getElementById('appTitle').textContent = APP_CONFIG.title;
+  document.getElementById('appSubtitle').textContent = APP_CONFIG.subtitle;
+  document.title = APP_CONFIG.title;
+
+  // Scrape date in footer
+  const scrapeText = `Data scraped: ${APP_CONFIG.scrapeDate}. <a href="#" onclick="showAuthBanner();return false;">Check auth status</a>`;
+  document.getElementById('dataAgeCalendar').innerHTML = scrapeText;
+  document.getElementById('dataAgeList').innerHTML = scrapeText;
+  document.getElementById('lastScraped').textContent = APP_CONFIG.scrapeDate;
+  document.getElementById('lastScrapedOk').textContent = APP_CONFIG.scrapeDate;
+
+  // Build auth banner links from unique platform URLs
+  const platformLinks = [];
+  const seenUrls = new Set();
+  for (const c of Object.values(courses)) {
+    if (c.platformUrl && !seenUrls.has(c.platformUrl)) {
+      seenUrls.add(c.platformUrl);
+      const label = c.platform.charAt(0).toUpperCase() + c.platform.slice(1);
+      platformLinks.push(`<a href="${c.platformUrl}" target="_blank">${label}</a>`);
+    }
+  }
+  document.getElementById('authMsg').innerHTML =
+    `<strong>Session check:</strong> Your assignment data was last scraped on <span id="lastScraped">${APP_CONFIG.scrapeDate}</span>. ` +
+    `If data looks stale, re-authenticate: ${platformLinks.join(' | ')}`;
+
+  // Legend
+  const legend = document.getElementById('legendContainer');
+  let legendHtml = '';
+  for (const [id, c] of Object.entries(courses)) {
+    const shortName = c.name.replace(/^(EECS|STATS|TC)\s*/, '').substring(0, 5);
+    legendHtml += `<div class="legend-item"><div class="legend-dot" style="background:var(--${id})"></div>${shortName}</div>`;
+  }
+  legendHtml += `<div class="legend-item"><div class="legend-dot" style="background:var(--done)"></div>Done</div>`;
+  legend.innerHTML = legendHtml;
+
+  // Filter buttons
+  const filterContainer = document.getElementById('filterContainer');
+  let filterHtml = '';
+  for (const [id, c] of Object.entries(courses)) {
+    const shortName = c.name.replace(/^(EECS|STATS|TC)\s*/, '').substring(0, 5);
+    filterHtml += `<button onclick="toggleFilter('${id}')" id="filter-${id}">${shortName}</button>`;
+  }
+  filterContainer.innerHTML = filterHtml;
+})();
+
+// ========== STATE ==========
+const _d = new Date();
+const todayStr = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
+let currentDate = new Date(todayStr + 'T12:00:00');
+currentDate.setDate(1); // start of month
+let viewMode = 'calendar';
+let doneMap = {};
+let filters = {};
+for (const id of Object.keys(courses)) filters[id] = true;
+
+// Edit mode state
+let editMode = false;
+let edits = {};       // {assignmentId: editedAssignmentObject}
+let additions = {};   // {customId: newAssignmentObject}
+let deletions = {};   // {assignmentId: true}
+let currentAssignments = [...assignments]; // merged assignments for rendering
+let editsRef = null;
+let additionsRef = null;
+let deletionsRef = null;
+
+// ========== HELPER FUNCTIONS ==========
+function getPlatform(course) {
+  return courses[course] ? courses[course].platform : 'web';
+}
+
+function getPlatformUrl(course) {
+  return courses[course] ? courses[course].platformUrl : null;
+}
+
+// ========== FIREBASE CONFIG ==========
+const firebaseConfig = APP_CONFIG.firebase;
+
+// ========== FIREBASE INIT ==========
+let db = null;
+let doneRef = null;
+let firebaseReady = false;
+
+function isScrapeToday() {
+  try {
+    const scrapeDate = new Date(APP_CONFIG.scrapeDate);
+    const today = new Date();
+    return scrapeDate.toDateString() === today.toDateString();
+  } catch(e) { return false; }
+}
+
+function setSyncStatus(state) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  const indicator = document.getElementById('syncIndicator');
+  if (!dot || !label) return;
+  dot.className = 'sync-dot ' + state;
+  if (state === 'synced') {
+    label.textContent = isScrapeToday() ? 'Synced today' : 'Synced';
+    if (indicator) indicator.title = 'Click to re-scrape assignments';
+  } else if (state === 'syncing') {
+    label.textContent = 'Syncing\u2026';
+  } else if (state === 'scraping') {
+    dot.className = 'sync-dot syncing';
+    label.textContent = 'Scraping\u2026';
+    if (indicator) indicator.title = 'Scraping assignments from Canvas & Gradescope\u2026';
+  } else if (state === 'error') {
+    label.textContent = 'Sync error';
+  } else {
+    label.textContent = 'Offline';
+  }
+}
+
+function triggerScrape() {
+  const indicator = document.getElementById('syncIndicator');
+  if (!indicator || indicator.classList.contains('scraping')) return;
+  indicator.classList.add('scraping');
+  setSyncStatus('scraping');
+
+  fetch('http://localhost:3847/scrape', { mode: 'cors' })
+    .then(r => r.json())
+    .then(data => {
+      indicator.classList.remove('scraping');
+      if (data.success) {
+        // Reload page to pick up updated config.js
+        setSyncStatus('synced');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        setSyncStatus('error');
+        alert('Scrape failed:\n' + (data.error || 'Unknown error') +
+          (data.validation || ''));
+      }
+    })
+    .catch(err => {
+      indicator.classList.remove('scraping');
+      setSyncStatus('error');
+      alert(
+        'Could not reach scraper.\n\n' +
+        'Make sure the scraper server is running:\n' +
+        '  node run-scraper.js\n\n' +
+        'Error: ' + err.message
+      );
+    });
+}
+
+function initFirebase() {
+  if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === 'PASTE_YOUR_API_KEY') {
+    setSyncStatus('offline');
+    return;
+  }
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    doneRef = db.ref('doneMap');
+    setSyncStatus('syncing');
+
+    doneRef.on('value', (snapshot) => {
+      const remote = snapshot.val();
+      if (remote) {
+        doneMap = remote;
+        try { localStorage.setItem('assignment-done-v2', JSON.stringify(doneMap)); } catch(e) {}
+        render();
+      }
+      firebaseReady = true;
+      setSyncStatus('synced');
+    }, () => {
+      setSyncStatus('error');
+    });
+
+    // Edit mode Firebase refs
+    editsRef = db.ref('edits');
+    additionsRef = db.ref('additions');
+    deletionsRef = db.ref('deletions');
+
+    editsRef.on('value', (snap) => { edits = snap.val() || {}; render(); });
+    additionsRef.on('value', (snap) => { additions = snap.val() || {}; render(); });
+    deletionsRef.on('value', (snap) => { deletions = snap.val() || {}; render(); });
+
+    // Daily study task completions
+    dailyTaskRef = db.ref('dailyTasks');
+    dailyTaskRef.on('value', (snap) => {
+      dailyTaskDone = snap.val() || {};
+      try { localStorage.setItem('daily-tasks-done-v1', JSON.stringify(dailyTaskDone)); } catch(e) {}
+      if (viewMode === 'daily') render();
+    });
+
+    db.ref('.info/connected').on('value', (snap) => {
+      setSyncStatus(snap.val() ? 'synced' : 'offline');
+    });
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    setSyncStatus('error');
+  }
+}
+
+// Load done state from localStorage (offline cache)
+try {
+  const saved = localStorage.getItem('assignment-done-v2');
+  if (saved) doneMap = JSON.parse(saved);
+} catch(e) {}
+
+// Load edit state from localStorage (offline cache)
+try {
+  const se = localStorage.getItem('assignment-edits-v1');
+  const sa = localStorage.getItem('assignment-additions-v1');
+  const sd = localStorage.getItem('assignment-deletions-v1');
+  if (se) edits = JSON.parse(se);
+  if (sa) additions = JSON.parse(sa);
+  if (sd) deletions = JSON.parse(sd);
+} catch(e) {}
+
+function saveDone() {
+  try { localStorage.setItem('assignment-done-v2', JSON.stringify(doneMap)); } catch(e) {}
+  if (doneRef && firebaseReady) {
+    setSyncStatus('syncing');
+    doneRef.set(doneMap)
+      .then(() => setSyncStatus('synced'))
+      .catch(() => setSyncStatus('error'));
+  }
+}
+
+function toggleDone(id) {
+  doneMap[id] = !doneMap[id];
+  saveDone();
+  render();
+}
+
+function toggleFilter(course) {
+  filters[course] = !filters[course];
+  render();
+}
+
+function changeMonth(delta) {
+  currentDate.setMonth(currentDate.getMonth() + delta);
+  render();
+}
+
+function goToday() {
+  currentDate = new Date(todayStr + 'T12:00:00');
+  currentDate.setDate(1);
+  render();
+}
+
+function toggleView() {
+  viewMode = viewMode === 'calendar' ? 'list' : 'calendar';
+  render();
+}
+
+function switchToDaily() {
+  viewMode = viewMode === 'daily' ? 'calendar' : 'daily';
+  render();
+}
+
+function getMergedAssignments() {
+  let merged = assignments.filter(a => !deletions[a.id]);
+  merged = merged.map(a => edits[a.id] ? { ...a, ...edits[a.id] } : a);
+  merged.push(...Object.values(additions));
+  return merged;
+}
+
+// ========== EDIT MODE ==========
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('editModeBtn').classList.toggle('active', editMode);
+  document.getElementById('addBtn').style.display = editMode ? 'inline-block' : 'none';
+  render();
+}
+
+function saveEditsLocal() {
+  try {
+    localStorage.setItem('assignment-edits-v1', JSON.stringify(edits));
+    localStorage.setItem('assignment-additions-v1', JSON.stringify(additions));
+    localStorage.setItem('assignment-deletions-v1', JSON.stringify(deletions));
+  } catch(e) {}
+}
+
+function populateCourseDropdown() {
+  const sel = document.getElementById('editCourse');
+  if (sel.options.length > 0) return; // already populated
+  for (const [id, c] of Object.entries(courses)) {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = c.name;
+    sel.appendChild(opt);
+  }
+}
+
+function openEditModal(assignmentId) {
+  populateCourseDropdown();
+  const a = currentAssignments.find(x => x.id === assignmentId);
+  if (!a) return;
+  document.getElementById('editModalTitle').textContent = 'Edit Assignment';
+  document.getElementById('editName').value = a.name || '';
+  document.getElementById('editCourse').value = a.course || '';
+  document.getElementById('editType').value = a.type || 'assignment';
+  document.getElementById('editDue').value = a.due || '';
+  document.getElementById('editTime').value = a.time || '';
+  document.getElementById('editPoints').value = a.points || '';
+  document.getElementById('editHours').value = a.hours || '';
+  document.getElementById('editSpecUrl').value = a.specUrl || '';
+  document.getElementById('editForm').dataset.editingId = a.id;
+  document.getElementById('editForm').dataset.isNew = 'false';
+  document.getElementById('editDeleteBtn').style.display = 'inline-block';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function openAddModal() {
+  populateCourseDropdown();
+  document.getElementById('editModalTitle').textContent = 'Add Assignment';
+  document.getElementById('editForm').reset();
+  document.getElementById('editForm').dataset.editingId = '';
+  document.getElementById('editForm').dataset.isNew = 'true';
+  document.getElementById('editDeleteBtn').style.display = 'none';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+function saveFromModal() {
+  const form = document.getElementById('editForm');
+  const id = form.dataset.editingId;
+  const isNew = form.dataset.isNew === 'true';
+  const name = document.getElementById('editName').value.trim();
+  const course = document.getElementById('editCourse').value;
+  const due = document.getElementById('editDue').value;
+
+  if (!name || !course || !due) {
+    alert('Please fill in Name, Course, and Due Date.');
+    return;
+  }
+
+  const obj = {
+    id: id || ('custom-' + Date.now()),
+    name: name,
+    course: course,
+    type: document.getElementById('editType').value,
+    due: due,
+    time: document.getElementById('editTime').value.trim() || null,
+    points: document.getElementById('editPoints').value.trim() || null,
+    hours: parseFloat(document.getElementById('editHours').value) || 0,
+    specUrl: document.getElementById('editSpecUrl').value.trim() || null
+  };
+
+  if (isNew || !id) {
+    // New assignment
+    additions[obj.id] = obj;
+    if (additionsRef && firebaseReady) {
+      setSyncStatus('syncing');
+      additionsRef.child(obj.id).set(obj).then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
+    }
+  } else if (additions[id]) {
+    // Editing a previously-added custom assignment
+    additions[id] = obj;
+    if (additionsRef && firebaseReady) {
+      setSyncStatus('syncing');
+      additionsRef.child(id).set(obj).then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
+    }
+  } else {
+    // Editing a config assignment
+    edits[id] = obj;
+    if (editsRef && firebaseReady) {
+      setSyncStatus('syncing');
+      editsRef.child(id).set(obj).then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
+    }
+  }
+
+  saveEditsLocal();
+  closeEditModal();
+  render();
+}
+
+function deleteFromModal() {
+  const id = document.getElementById('editForm').dataset.editingId;
+  if (!id) return;
+  if (!confirm('Delete this assignment?')) return;
+
+  if (additions[id]) {
+    // Remove custom addition
+    delete additions[id];
+    if (additionsRef && firebaseReady) additionsRef.child(id).remove();
+  } else {
+    // Mark config assignment as deleted
+    deletions[id] = true;
+    if (deletionsRef && firebaseReady) deletionsRef.child(id).set(true);
+    // Clean up any edits for this item
+    delete edits[id];
+    if (editsRef && firebaseReady) editsRef.child(id).remove();
+  }
+
+  // Also remove from doneMap
+  delete doneMap[id];
+  saveDone();
+
+  saveEditsLocal();
+  closeEditModal();
+  render();
+}
+
+function handleAssignmentClick(e, assignmentId) {
+  e.stopPropagation();
+  if (editMode) {
+    openEditModal(assignmentId);
+  } else {
+    toggleDone(assignmentId);
+  }
+}
+
+function getAssignmentsForDate(dateStr) {
+  return currentAssignments.filter(a => a.due === dateStr && filters[a.course]);
+}
+
+function formatHours(h) {
+  if (!h || h <= 0) return '0 min';
+  const hrs = Math.floor(h);
+  const mins = Math.round((h - hrs) * 60);
+  if (hrs === 0) return `${mins} min`;
+  if (mins === 0) return `${hrs} hr`;
+  return `${hrs} hr ${mins} min`;
+}
+
+function formatDate(dateStr, time) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const datePart = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return time ? `${datePart} at ${time}` : datePart;
+}
+
+// ========== AUTH CHECK ==========
+function showAuthBanner() {
+  document.getElementById('authBanner').classList.add('show');
+  document.getElementById('authOkBanner').classList.remove('show');
+}
+
+function dismissAuth() {
+  document.getElementById('authBanner').classList.remove('show');
+}
+
+async function checkAuth() {
+  const btn = document.querySelector('.check-btn');
+  btn.textContent = 'Checking...';
+  btn.disabled = true;
+
+  // Collect unique platform URLs
+  const urls = new Set();
+  for (const c of Object.values(courses)) {
+    if (c.platformUrl) urls.add(c.platformUrl);
+  }
+
+  let allOk = true;
+  for (const url of urls) {
+    try {
+      await fetch(url, { mode: 'no-cors', credentials: 'include' });
+    } catch(e) {
+      allOk = false;
+    }
+  }
+
+  btn.textContent = 'Check Now';
+  btn.disabled = false;
+
+  if (allOk) {
+    document.getElementById('authBanner').classList.remove('show');
+    document.getElementById('authOkBanner').classList.add('show');
+    setTimeout(() => {
+      document.getElementById('authOkBanner').classList.remove('show');
+    }, 5000);
+  } else {
+    const msg = document.getElementById('authMsg');
+    msg.innerHTML = '<strong>Auth issue detected!</strong> Could not reach one or more course platforms. Please log in and re-scrape.';
+  }
+}
+
+function checkDataAge() {
+  const scrapeParts = APP_CONFIG.scrapeDate;
+  const scrapeDate = new Date(scrapeParts);
+  if (isNaN(scrapeDate)) return;
+  const now = new Date();
+  const daysSince = Math.floor((now - scrapeDate) / (1000 * 60 * 60 * 24));
+  if (daysSince >= 3) {
+    showAuthBanner();
+  }
+}
+
+// ========== STUDY PLAN GENERATOR ==========
+function generateStudyPlan(assignment, today) {
+  const type = assignment.type;
+  if (type !== 'exam' && type !== 'project') return '';
+  const dueDate = new Date(assignment.due + 'T23:59:00');
+  const todayDate = new Date(today + 'T00:00:00');
+  const daysLeft = Math.ceil((dueDate - todayDate) / (1000 * 60 * 60 * 24));
+  const totalHours = assignment.hours || (type === 'exam' ? 10 : 8);
+
+  // Already past due
+  if (daysLeft < 0) return '';
+
+  // Helper to format a date as "Mon 3/8"
+  function fmtDay(d) {
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    return days[d.getDay()] + ' ' + (d.getMonth()+1) + '/' + d.getDate();
+  }
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function dateStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+  let steps = [];
+
+  if (type === 'exam') {
+    // Exam study plan: spread review over available days
+    const idealDays = Math.min(daysLeft, Math.max(3, Math.ceil(totalHours / 2)));
+    const startOffset = daysLeft - idealDays;
+    const hoursPerDay = +(totalHours / idealDays).toFixed(1);
+
+    const phases = [
+      { pct: 0.30, label: 'Review lecture notes & key concepts' },
+      { pct: 0.25, label: 'Work through practice problems' },
+      { pct: 0.25, label: 'Revisit homework solutions & past exams' },
+      { pct: 0.15, label: 'Focus on weak areas & tricky topics' },
+      { pct: 0.05, label: 'Light review & rest before exam' },
+    ];
+
+    let dayIndex = 0;
+    for (const phase of phases) {
+      const phaseDays = Math.max(1, Math.round(idealDays * phase.pct));
+      for (let d = 0; d < phaseDays && dayIndex < idealDays; d++, dayIndex++) {
+        const date = addDays(todayDate, startOffset + dayIndex);
+        const isToday = dateStr(date) === today;
+        const isPast = date < todayDate;
+        steps.push({ date: fmtDay(date), task: phase.label, hours: hoursPerDay, isToday, isPast });
+      }
+    }
+    // Fill remaining days if any
+    while (dayIndex < idealDays) {
+      const date = addDays(todayDate, startOffset + dayIndex);
+      const isToday = dateStr(date) === today;
+      const isPast = date < todayDate;
+      steps.push({ date: fmtDay(date), task: 'General review', hours: hoursPerDay, isToday, isPast });
+      dayIndex++;
+    }
+  } else {
+    // Project study plan: phase-based breakdown
+    // 1-2 days reading/planning, 4-5 days coding (3 submissions/day limit), rest for testing
+    const phases = [
+      { pct: 0.08, label: 'Read spec thoroughly & understand requirements' },
+      { pct: 0.08, label: 'Plan approach & outline design' },
+      { pct: 0.38, label: 'Implement core functionality (3 submissions/day)' },
+      { pct: 0.18, label: 'Implement edge cases & remaining features' },
+      { pct: 0.18, label: 'Test, debug & fix issues' },
+      { pct: 0.10, label: 'Final review, clean up & submit' },
+    ];
+
+    // Minimum 8 days: 2 reading/planning + 4-5 coding + 1-2 testing/submit
+    const idealDays = Math.min(daysLeft, Math.max(8, Math.ceil(totalHours / 1.5)));
+    const startOffset = daysLeft - idealDays;
+
+    let dayIndex = 0;
+    for (const phase of phases) {
+      const phaseDays = Math.max(1, Math.round(idealDays * phase.pct));
+      const phaseHours = +(totalHours * phase.pct / phaseDays).toFixed(1);
+      for (let d = 0; d < phaseDays && dayIndex < idealDays; d++, dayIndex++) {
+        const date = addDays(todayDate, startOffset + dayIndex);
+        const isToday = dateStr(date) === today;
+        const isPast = date < todayDate;
+        steps.push({ date: fmtDay(date), task: phase.label, hours: phaseHours, isToday, isPast });
+      }
+    }
+    while (dayIndex < idealDays) {
+      const date = addDays(todayDate, startOffset + dayIndex);
+      const isToday = dateStr(date) === today;
+      const isPast = date < todayDate;
+      steps.push({ date: fmtDay(date), task: 'Buffer / catch-up time', hours: 1, isToday, isPast });
+      dayIndex++;
+    }
+  }
+
+  // Build HTML
+  let html = '<div class="study-plan">';
+  html += `<div class="study-plan-header">${type === 'exam' ? 'Study Plan' : 'Work Breakdown'}</div>`;
+  for (const s of steps) {
+    const cls = s.isPast ? ' sp-past' : (s.isToday ? ' sp-today' : '');
+    html += `<div class="study-plan-step${cls}">`;
+    html += `<span class="sp-day">${s.date}</span>`;
+    html += `<span class="sp-task">${s.task}</span>`;
+    html += `<span class="sp-hours">${formatHours(s.hours)}</span>`;
+    html += '</div>';
+  }
+  if (daysLeft <= 1) {
+    html += '<div class="study-plan-note">Due very soon — focus on highest-impact items!</div>';
+  } else if (daysLeft <= 3) {
+    html += '<div class="study-plan-note">Getting close — prioritize and stay focused!</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// ========== TOOLTIP ==========
+function showTooltip(e, assignment) {
+  e.stopPropagation();
+  cancelHideTooltip(); // Cancel any pending hide
+  const tooltip = document.getElementById('tooltip');
+  const platform = getPlatform(assignment.course);
+  const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
+  const platformUrl = assignment.specUrl || getPlatformUrl(assignment.course);
+  const linkLabel = assignment.specUrl ? 'View Spec' : `View on ${platformLabel}`;
+
+  let html = `<div class="tooltip-title">${assignment.name}</div>`;
+  html += `<div class="tooltip-row"><strong>Course:</strong> ${courseNames[assignment.course]}</div>`;
+  html += `<div class="tooltip-row"><strong>Due:</strong> ${formatDate(assignment.due, assignment.time)}</div>`;
+  html += `<div class="tooltip-row"><strong>Type:</strong> ${assignment.type}</div>`;
+  html += `<div class="tooltip-row"><strong>Points:</strong> ${assignment.points}</div>`;
+  if (assignment.hours) html += `<div class="tooltip-row"><strong>Est. Time:</strong> ${formatHours(assignment.hours)}</div>`;
+  const pri = getPriority(assignment, todayStr);
+  if (pri.level !== 'none') html += `<div class="tooltip-row"><strong>Priority:</strong> <span class="priority-badge priority-${pri.level}">${pri.level.toUpperCase()}</span></div>`;
+  const wl = getWorkloadBadge(assignment.hours);
+  if (wl) html += `<div class="tooltip-row"><strong>Workload:</strong> <span class="priority-badge ${wl.cls}">${wl.label}</span></div>`;
+  html += `<div class="tooltip-row"><strong>Status:</strong> ${doneMap[assignment.id] ? '\u2713 Done' : 'Pending'}</div>`;
+
+  if (platformUrl) {
+    html += `<a href="${platformUrl}" target="_blank" class="tooltip-link">${linkLabel}</a>`;
+  }
+
+  // Add study plan for exams and projects (only if not already done)
+  if (!doneMap[assignment.id]) {
+    html += generateStudyPlan(assignment, todayStr);
+  }
+
+  tooltip.innerHTML = html;
+  tooltip.classList.add('show');
+
+  // Use currentTarget (the chip/list-item div) not e.target (could be a child span)
+  const chip = e.currentTarget || e.target;
+  const rect = chip.getBoundingClientRect();
+  let left = rect.left;
+  let top = rect.bottom + 4; // Small gap so tooltip feels connected
+  // Keep tooltip on-screen
+  const tw = tooltip.offsetWidth;
+  const th = tooltip.offsetHeight;
+  if (left + tw > window.innerWidth - 12) left = window.innerWidth - tw - 12;
+  if (left < 8) left = 8;
+  if (top + th > window.innerHeight - 12) top = rect.top - th - 4;
+  tooltip.style.left = left + 'px';
+  tooltip.style.top = top + 'px';
+}
+
+let tooltipHideTimer = null;
+
+function scheduleHideTooltip() {
+  cancelHideTooltip();
+  tooltipHideTimer = setTimeout(() => {
+    document.getElementById('tooltip').classList.remove('show');
+  }, 400);
+}
+
+function cancelHideTooltip() {
+  if (tooltipHideTimer) {
+    clearTimeout(tooltipHideTimer);
+    tooltipHideTimer = null;
+  }
+}
+
+function hideTooltip() {
+  cancelHideTooltip();
+  document.getElementById('tooltip').classList.remove('show');
+}
+
+document.addEventListener('click', function(e) {
+  const tooltip = document.getElementById('tooltip');
+  if (!tooltip.contains(e.target)) hideTooltip();
+});
+
+// ========== PRIORITY SYSTEM ==========
+function getPriority(a, today) {
+  if (doneMap[a.id]) return { level: 'none', score: 0 };
+  const todayDate = new Date(today + 'T12:00:00');
+  const due = new Date(a.due + 'T12:00:00');
+  const daysUntil = Math.round((due - todayDate) / (1000 * 60 * 60 * 24));
+
+  const typeWeight = { exam: 3, project: 2.5, homework: 2, casestudy: 2, ep: 1.5, lab: 1.5, prelab: 1, quiz: 1.2, lecture: 0.5, assignment: 1.5 };
+  const tw = typeWeight[a.type] || 1;
+  const hoursWeight = Math.min(a.hours / 5, 3);
+  const pts = parseInt(a.points) || 0;
+  const ptsWeight = pts >= 80 ? 2 : pts >= 40 ? 1.5 : pts >= 10 ? 1 : 0.5;
+
+  let urgency;
+  if (daysUntil < 0) urgency = 5;
+  else if (daysUntil <= 1) urgency = 4;
+  else if (daysUntil <= 3) urgency = 3;
+  else if (daysUntil <= 7) urgency = 2;
+  else if (daysUntil <= 14) urgency = 1;
+  else urgency = 0.5;
+
+  const score = urgency * 2 + tw * 1.5 + hoursWeight + ptsWeight * 0.5;
+
+  let level;
+  if (daysUntil > 7) level = 'low';
+  else if (score >= 10) level = 'high';
+  else if (score >= 6) level = 'med';
+  else level = 'low';
+
+  return { level, score };
+}
+
+// ========== WORKLOAD HEATMAP ==========
+function getDayHours(dateStr) {
+  return currentAssignments
+    .filter(a => a.due === dateStr && filters[a.course] && !doneMap[a.id])
+    .reduce((sum, a) => sum + (a.hours || 0), 0);
+}
+
+// Bar = highest priority assignment that day
+function getDayMaxPriority(dateStr) {
+  const dayAssignments = currentAssignments.filter(a => a.due === dateStr && filters[a.course] && !doneMap[a.id]);
+  if (dayAssignments.length === 0) return 'none';
+  const order = { high: 3, med: 2, low: 1, none: 0 };
+  return dayAssignments.reduce((best, a) => {
+    const p = getPriority(a, todayStr).level;
+    return order[p] > order[best] ? p : best;
+  }, 'none');
+}
+
+// Exclamation = workload for that assignment
+function getWorkloadBadge(hours) {
+  if (!hours || hours <= 0) return null;
+  if (hours <= 2)  return { cls: 'workload-low',  label: '!'   };
+  if (hours <= 5)  return { cls: 'workload-med',  label: '!!'  };
+  return               { cls: 'workload-high', label: '!!!' };
+}
+
+// ========== PANIC MODE ==========
+let panicIds = new Set();
+
+function checkPanicMode() {
+  panicIds.clear();
+  const today = new Date(todayStr + 'T12:00:00');
+  const panicWindowDays = 3;
+
+  const urgent = currentAssignments.filter(a => {
+    if (doneMap[a.id]) return false;
+    if (!filters[a.course]) return false;
+    const due = new Date(a.due + 'T12:00:00');
+    const daysUntil = Math.round((due - today) / (1000 * 60 * 60 * 24));
+    return daysUntil >= 0 && daysUntil <= panicWindowDays;
+  });
+
+  const totalUrgentHours = urgent.reduce((s, a) => s + (a.hours || 0), 0);
+  const isPanic = urgent.length >= 3 || totalUrgentHours >= 10;
+
+  const banner = document.getElementById('panicBanner');
+  const msg = document.getElementById('panicMsg');
+
+  if (isPanic && urgent.length > 0) {
+    for (const a of urgent) panicIds.add(a.id);
+    msg.innerHTML = `<strong>PANIC MODE:</strong> ${urgent.length} incomplete assignment${urgent.length > 1 ? 's' : ''} due within ${panicWindowDays} days (~${totalUrgentHours.toFixed(1)} hours of work)!`;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ========== RENDER ==========
+function render() {
+  // Merge config + Firebase edits
+  currentAssignments = getMergedAssignments();
+
+  document.getElementById('monthLabel').textContent =
+    currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  document.getElementById('viewToggle').textContent =
+    viewMode === 'calendar' ? 'List View' : 'Calendar View';
+  document.getElementById('dailyToggle').textContent =
+    viewMode === 'daily' ? 'Calendar' : 'Daily';
+
+  // Update filter button styles
+  for (const id of Object.keys(courses)) {
+    document.getElementById('filter-' + id).className = filters[id] ? 'f-on-' + id : 'f-off';
+  }
+
+  document.getElementById('calendarView').style.display = viewMode === 'calendar' ? 'block' : 'none';
+  document.getElementById('listView').style.display = viewMode === 'list' ? 'block' : 'none';
+  document.getElementById('dailyView').style.display = viewMode === 'daily' ? 'block' : 'none';
+
+  // Edit mode class on body for CSS hooks
+  document.body.classList.toggle('edit-active', editMode);
+
+  checkPanicMode();
+
+  if (viewMode === 'calendar') renderCalendar();
+  else if (viewMode === 'list') renderList();
+  else renderDaily();
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const startDate = new Date(firstDay);
+  startDate.setDate(startDate.getDate() - startDate.getDay());
+
+  let html = '';
+  let d = new Date(startDate);
+
+  for (let i = 0; i < 42; i++) {
+    const dateStr = d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0');
+    const isToday = dateStr === todayStr;
+    const isOtherMonth = d.getMonth() !== month;
+    const dayAssignments = getAssignmentsForDate(dateStr);
+
+    let classes = 'day-cell';
+    if (isToday) classes += ' today';
+    if (isOtherMonth) classes += ' other-month';
+
+    const dayMaxPriority = getDayMaxPriority(dateStr);
+
+    html += `<div class="${classes}">`;
+    html += `<div class="day-num">${d.getDate()}</div>`;
+    if (dayMaxPriority !== 'none') {
+      html += `<div class="heat-bar heat-${dayMaxPriority}" title="${dayMaxPriority} priority day"></div>`;
+    }
+
+    for (const a of dayAssignments) {
+      const isDone = doneMap[a.id];
+      const chipClass = isDone ? 'done' : a.course;
+      const isPanic = panicIds.has(a.id);
+      const workload = !isDone ? getWorkloadBadge(a.hours) : null;
+      html += `<div class="assignment-chip ${chipClass}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseenter="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseleave="scheduleHideTooltip()" style="cursor:pointer;">`;
+      html += `<span class="check">${isDone ? '\u2713' : ''}</span>`;
+      if (workload) {
+        html += `<span class="priority-badge ${workload.cls}">${workload.label}</span>`;
+      }
+      html += `<span>${a.name}</span>`;
+      html += `<span class="chip-edit-icon">&#9998;</span>`;
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+    d.setDate(d.getDate() + 1);
+  }
+  grid.innerHTML = html;
+
+  // Heatmap legend
+  let legendEl = document.getElementById('heatmapLegend');
+  if (!legendEl) {
+    legendEl = document.createElement('div');
+    legendEl.id = 'heatmapLegend';
+    legendEl.className = 'heatmap-legend';
+    grid.parentNode.insertBefore(legendEl, grid.nextSibling);
+  }
+  legendEl.innerHTML = `
+    <span>Priority bar:</span>
+    <span class="swatch" style="background:#86efac"></span> Low
+    <span class="swatch" style="background:#fb923c"></span> Med
+    <span class="swatch" style="background:#ef4444"></span> High
+    <span style="margin-left:12px">Workload:</span>
+    <span class="priority-badge workload-high">!!!</span> &gt;5h
+    <span class="priority-badge workload-med">!!</span> \u22645h
+    <span class="priority-badge workload-low">!</span> \u22642h
+  `;
+}
+
+function renderList() {
+  const filtered = currentAssignments.filter(a => filters[a.course]);
+  const overdue = filtered.filter(a => a.due < todayStr && !doneMap[a.id]);
+  const upcoming = filtered.filter(a => a.due >= todayStr && !doneMap[a.id]).sort((a,b) => a.due.localeCompare(b.due));
+  const completed = filtered.filter(a => doneMap[a.id]).sort((a,b) => a.due.localeCompare(b.due));
+
+  const total = filtered.length;
+  const upcomingHours = upcoming.reduce((s, a) => s + (a.hours || 0), 0);
+  const overdueHours = overdue.reduce((s, a) => s + (a.hours || 0), 0);
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="num" style="color:#dc2626">${overdue.length}</div><div class="label">Overdue${overdueHours ? ' (~' + overdueHours.toFixed(0) + 'h)' : ''}</div></div>
+    <div class="stat-card"><div class="num" style="color:#2563eb">${upcoming.length}</div><div class="label">Upcoming (~${upcomingHours.toFixed(0)}h)</div></div>
+    <div class="stat-card"><div class="num" style="color:#16a34a">${completed.length}</div><div class="label">Completed</div></div>
+    <div class="stat-card"><div class="num">${total}</div><div class="label">Total</div></div>
+  `;
+
+  let html = '';
+  if (overdue.length) {
+    html += `<div class="list-section"><h2 class="overdue">Overdue (${overdue.length})</h2>`;
+    for (const a of overdue.sort((a,b) => b.due.localeCompare(a.due))) html += renderListItem(a);
+    html += `</div>`;
+  }
+  if (upcoming.length) {
+    html += `<div class="list-section"><h2 class="upcoming">Upcoming (${upcoming.length})</h2>`;
+    for (const a of upcoming) html += renderListItem(a);
+    html += `</div>`;
+  }
+  if (completed.length) {
+    html += `<div class="list-section"><h2 class="completed-header">Completed (${completed.length})</h2>`;
+    for (const a of completed) html += renderListItem(a);
+    html += `</div>`;
+  }
+  document.getElementById('listContent').innerHTML = html;
+}
+
+function renderListItem(a) {
+  const isDone = doneMap[a.id];
+  const isPanic = panicIds.has(a.id);
+  const priority = getPriority(a, todayStr);
+  const priorityHtml = (!isDone && priority.level !== 'none')
+    ? `<span class="priority-tag priority-${priority.level}">${priority.level.toUpperCase()}</span>`
+    : '';
+  const hoursHtml = a.hours ? `<span class="hours-badge"><strong>${formatHours(a.hours)}</strong> est.</span>` : '';
+  return `
+    <div class="list-item ${isDone ? 'done' : ''}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseenter="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseleave="scheduleHideTooltip()">
+      <div class="checkbox">${isDone ? '\u2713' : ''}</div>
+      <div class="info">
+        <div class="name">${a.name}</div>
+        <div class="meta">Due: ${formatDate(a.due, a.time)} \u00b7 ${a.type} \u00b7 ${a.points} pts</div>
+      </div>
+      ${hoursHtml}
+      ${priorityHtml}
+      <span class="course-tag ${a.course}">${courseNames[a.course]}</span>
+      <span class="list-item-edit-icon">&#9998;</span>
+    </div>
+  `;
+}
+
+// ========== DAILY VIEW ==========
+// Track completed study tasks (keyed by "assignmentId::task-label")
+let dailyTaskDone = {};
+let dailyTaskRef = null;
+
+// Load daily task done state from localStorage
+try {
+  const savedDt = localStorage.getItem('daily-tasks-done-v1');
+  if (savedDt) dailyTaskDone = JSON.parse(savedDt);
+} catch(e) {}
+
+function saveDailyTaskDone() {
+  try { localStorage.setItem('daily-tasks-done-v1', JSON.stringify(dailyTaskDone)); } catch(e) {}
+  if (dailyTaskRef) {
+    dailyTaskRef.set(dailyTaskDone).catch(() => {});
+  }
+}
+
+function toggleDailyTask(key) {
+  dailyTaskDone[key] = !dailyTaskDone[key];
+  saveDailyTaskDone();
+  render();
+}
+
+function getTodayStudyTasks() {
+  const tasks = [];
+  const todayDate = new Date(todayStr + 'T00:00:00');
+
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function dateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  for (const a of currentAssignments) {
+    if (a.type !== 'exam' && a.type !== 'project') continue;
+    if (doneMap[a.id]) continue;
+    if (!filters[a.course]) continue;
+
+    const dueDate = new Date(a.due + 'T23:59:00');
+    const daysLeft = Math.ceil((dueDate - todayDate) / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) continue;
+
+    const totalHours = a.hours || (a.type === 'exam' ? 10 : 8);
+
+    let phases, idealDays, startOffset;
+
+    if (a.type === 'exam') {
+      idealDays = Math.min(daysLeft, Math.max(3, Math.ceil(totalHours / 2)));
+      startOffset = daysLeft - idealDays;
+      phases = [
+        { pct: 0.30, label: 'Review lecture notes & key concepts' },
+        { pct: 0.25, label: 'Work through practice problems' },
+        { pct: 0.25, label: 'Revisit homework solutions & past exams' },
+        { pct: 0.15, label: 'Focus on weak areas & tricky topics' },
+        { pct: 0.05, label: 'Light review & rest before exam' },
+      ];
+    } else {
+      idealDays = Math.min(daysLeft, Math.max(8, Math.ceil(totalHours / 1.5)));
+      startOffset = daysLeft - idealDays;
+      phases = [
+        { pct: 0.08, label: 'Read spec thoroughly & understand requirements' },
+        { pct: 0.08, label: 'Plan approach & outline design' },
+        { pct: 0.38, label: 'Implement core functionality (3 submissions/day)' },
+        { pct: 0.18, label: 'Implement edge cases & remaining features' },
+        { pct: 0.18, label: 'Test, debug & fix issues' },
+        { pct: 0.10, label: 'Final review, clean up & submit' },
+      ];
+    }
+
+    const hoursPerDay = +(totalHours / idealDays).toFixed(1);
+    let dayIndex = 0;
+
+    for (const phase of phases) {
+      const phaseDays = Math.max(1, Math.round(idealDays * phase.pct));
+      const phaseHours = a.type === 'exam' ? hoursPerDay : +(totalHours * phase.pct / phaseDays).toFixed(1);
+      for (let d = 0; d < phaseDays && dayIndex < idealDays; d++, dayIndex++) {
+        const date = addDays(todayDate, startOffset + dayIndex);
+        const ds = dateStr(date);
+        if (ds === todayStr) {
+          tasks.push({
+            assignmentId: a.id,
+            assignmentName: a.name,
+            course: a.course,
+            task: phase.label,
+            hours: phaseHours,
+            dueDate: a.due,
+            type: a.type
+          });
+        }
+      }
+    }
+  }
+  return tasks;
+}
+
+function renderDaily() {
+  const todayAssignments = getAssignmentsForDate(todayStr).filter(a => !doneMap[a.id] || true); // show all, done or not
+  const studyTasks = getTodayStudyTasks();
+
+  const todayDateObj = new Date(todayStr + 'T12:00:00');
+  const dateLabel = todayDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Summary counts
+  const dueCount = todayAssignments.filter(a => !doneMap[a.id]).length;
+  const studyCount = studyTasks.filter(t => !dailyTaskDone[t.assignmentId + '::' + t.task]).length;
+  const totalHours = todayAssignments.filter(a => !doneMap[a.id]).reduce((s, a) => s + (a.hours || 0), 0)
+    + studyTasks.filter(t => !dailyTaskDone[t.assignmentId + '::' + t.task]).reduce((s, t) => s + (t.hours || 0), 0);
+
+  let html = '';
+  html += `<div class="daily-header">Daily Assignments</div>`;
+  html += `<div class="daily-subheader">${dateLabel}</div>`;
+
+  // Summary cards
+  html += `<div class="daily-summary">`;
+  html += `<div class="daily-summary-card"><div class="ds-num" style="color:#2563eb">${dueCount}</div><div class="ds-label">Due Today</div></div>`;
+  html += `<div class="daily-summary-card"><div class="ds-num" style="color:#7c3aed">${studyCount}</div><div class="ds-label">Study Tasks</div></div>`;
+  html += `<div class="daily-summary-card"><div class="ds-num">${totalHours.toFixed(1)}h</div><div class="ds-label">Est. Work</div></div>`;
+  html += `</div>`;
+
+  // Due today section
+  if (todayAssignments.length > 0) {
+    html += `<div class="daily-section">`;
+    html += `<div class="daily-section-title"><span class="section-icon">&#128203;</span> Due Today <span class="section-count">${todayAssignments.length}</span></div>`;
+    for (const a of todayAssignments) {
+      const isDone = doneMap[a.id];
+      const pri = getPriority(a, todayStr);
+      const priHtml = (!isDone && pri.level !== 'none')
+        ? `<span class="priority-tag priority-${pri.level}" style="font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:4px;">${pri.level.toUpperCase()}</span>` : '';
+      html += `<div class="daily-item ${isDone ? 'done' : ''}" onclick="toggleDone('${a.id}'); render();">`;
+      html += `<div class="daily-check">${isDone ? '\u2713' : ''}</div>`;
+      html += `<div class="daily-info">`;
+      html += `<div class="daily-name">${a.name}</div>`;
+      html += `<div class="daily-meta">${a.time ? 'Due at ' + a.time : 'Due today'} \u00b7 ${a.type} \u00b7 ${a.points || 0} pts</div>`;
+      html += `</div>`;
+      if (a.hours) html += `<div class="daily-time-badge">${formatHours(a.hours)}</div>`;
+      html += priHtml;
+      html += `<span class="course-tag ${a.course}">${courseNames[a.course]}</span>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Study tasks section
+  if (studyTasks.length > 0) {
+    html += `<div class="daily-section">`;
+    html += `<div class="daily-section-title"><span class="section-icon">&#128218;</span> Study / Work Plan <span class="section-count">${studyTasks.length}</span></div>`;
+    for (const t of studyTasks) {
+      const key = t.assignmentId + '::' + t.task;
+      const isDone = dailyTaskDone[key];
+      const dueLabel = formatDate(t.dueDate, null);
+      html += `<div class="daily-item ${isDone ? 'done' : ''}" onclick="toggleDailyTask('${key.replace(/'/g, "\\'")}')">`;
+      html += `<div class="daily-check">${isDone ? '\u2713' : ''}</div>`;
+      html += `<div class="daily-info">`;
+      html += `<div class="daily-name">${t.task}</div>`;
+      html += `<div class="daily-study-parent">For: ${t.assignmentName} (${t.type === 'exam' ? 'Exam' : 'Project'} \u00b7 due ${dueLabel})</div>`;
+      html += `</div>`;
+      html += `<div class="daily-time-badge">${formatHours(t.hours)}</div>`;
+      html += `<span class="course-tag ${t.course}">${courseNames[t.course]}</span>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Empty state
+  if (todayAssignments.length === 0 && studyTasks.length === 0) {
+    html += `<div class="daily-empty">`;
+    html += `<div class="empty-icon">&#127881;</div>`;
+    html += `Nothing scheduled for today! Enjoy your free time.`;
+    html += `</div>`;
+  }
+
+  document.getElementById('dailyContent').innerHTML = html;
+}
+
+// ========== AUTO-MARK PAST ==========
+function autoMarkPast() {
+  if (localStorage.getItem('assignment-done-v2-init')) return;
+  if (!APP_CONFIG.autoCompleted || !APP_CONFIG.autoCompleted.length) return;
+  for (const id of APP_CONFIG.autoCompleted) doneMap[id] = true;
+  saveDone();
+  localStorage.setItem('assignment-done-v2-init', 'true');
+}
+
+// ========== DARK MODE ==========
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('theme-pref', isDark ? 'light' : 'dark');
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('themeIcon').innerHTML = isDark ? '&#9789;' : '&#9788;';
+}
+
+// Load saved theme
+(function() {
+  const saved = localStorage.getItem('theme-pref');
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+  updateThemeIcon();
+})();
+
+// ========== INIT ==========
+autoMarkPast();
+checkDataAge();
+render();
+initFirebase();
+</script>
+
+<!-- Edit Modal -->
+<div class="edit-modal" id="editModal">
+  <div class="edit-modal-backdrop" onclick="closeEditModal()"></div>
+  <div class="edit-modal-content">
+    <div class="edit-modal-header">
+      <h2 id="editModalTitle">Edit Assignment</h2>
+      <button class="edit-modal-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    <div class="edit-modal-body">
+      <form id="editForm" onsubmit="return false;">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" id="editName" required placeholder="e.g. Homework 3">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Course *</label>
+            <select id="editCourse" required></select>
+          </div>
+          <div class="form-group">
+            <label>Type *</label>
+            <select id="editType" required>
+              <option value="project">Project</option>
+              <option value="homework">Homework</option>
+              <option value="exam">Exam</option>
+              <option value="quiz">Quiz</option>
+              <option value="lab">Lab</option>
+              <option value="prelab">Prelab</option>
+              <option value="assignment">Assignment</option>
+              <option value="ep">EP</option>
+              <option value="casestudy">Case Study</option>
+              <option value="lecture">Lecture</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Due Date *</label>
+            <input type="date" id="editDue" required>
+          </div>
+          <div class="form-group">
+            <label>Due Time</label>
+            <input type="text" id="editTime" placeholder="11:59 PM">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Points</label>
+            <input type="text" id="editPoints" placeholder="50">
+          </div>
+          <div class="form-group">
+            <label>Est. Hours</label>
+            <input type="number" id="editHours" step="0.5" min="0" placeholder="6">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Spec URL</label>
+          <input type="url" id="editSpecUrl" placeholder="https://...">
+        </div>
+      </form>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-danger btn-danger-left" id="editDeleteBtn" style="display:none;" onclick="deleteFromModal()">Delete</button>
+      <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveFromModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
