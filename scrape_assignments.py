@@ -24,9 +24,67 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+# ── Terminal output helpers ─────────────────────────────────────────────
+
+_RESET  = "\x1b[0m"
+_BOLD   = "\x1b[1m"
+_GREEN  = "\x1b[32m"
+_YELLOW = "\x1b[33m"
+_RED    = "\x1b[31m"
+_CYAN   = "\x1b[36m"
+_GRAY   = "\x1b[90m"
+
+_TOTAL_STEPS = 9
+
+def _step_header(n, label):
+    bar = f"{_BOLD}{_CYAN}[{n}/{_TOTAL_STEPS}]{_RESET}"
+    print(f"\n{bar} {_BOLD}{label}{_RESET}")
+
+def _ok(msg=""):
+    print(f"     {_GREEN}✓{_RESET} {msg}")
+
+def _warn(msg):
+    print(f"     {_YELLOW}⚠{_RESET}  {msg}")
+
+def _err(msg):
+    print(f"     {_RED}✗{_RESET} {msg}")
+
+def _info(msg):
+    print(f"     {_GRAY}→{_RESET} {msg}")
+
+
+class Spinner:
+    """Animated spinner for blocking operations. Use as a context manager."""
+    _frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+
+    def __init__(self, label):
+        self._label = label
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._spin, daemon=True)
+
+    def _spin(self):
+        i = 0
+        while not self._stop.is_set():
+            frame = self._frames[i % len(self._frames)]
+            sys.stdout.write(f"\r     {_CYAN}{frame}{_RESET} {self._label}   ")
+            sys.stdout.flush()
+            time.sleep(0.08)
+            i += 1
+
+    def __enter__(self):
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_):
+        self._stop.set()
+        self._thread.join()
+        sys.stdout.write("\r" + " " * (len(self._label) + 12) + "\r")
+        sys.stdout.flush()
 
 # ── Dependency check ───────────────────────────────────────────────────
 
@@ -290,12 +348,12 @@ def wait_for_login(driver, url, check_fn, service_name):
     driver.get(url)
     time.sleep(3)
     if not check_fn(driver):
-        print(f"\n⚠  Please log into {service_name} in the browser window.")
-        print("   Press Enter here when done...")
+        print(f"\n  {_YELLOW}⚠{_RESET}  Please log into {_BOLD}{service_name}{_RESET} in the browser window.")
+        print(f"       Press Enter here when done…")
         input()
         time.sleep(2)
         if not check_fn(driver):
-            print(f"   Still not logged into {service_name}. Skipping.")
+            _warn(f"Still not logged into {service_name} — skipping")
             return False
     return True
 
@@ -312,7 +370,6 @@ def scrape_canvas_planner(driver):
     if not logged_in:
         return []
 
-    print("   Fetching Canvas planner API...")
     try:
         items = driver.execute_script("""
             const resp = await fetch(
@@ -322,10 +379,9 @@ def scrape_canvas_planner(driver):
             return await resp.json();
         """)
     except JavascriptException as e:
-        print(f"   Canvas API error: {e}")
+        _err(f"Canvas API error: {e}")
         return []
 
-    print(f"   Got {len(items)} planner items from Canvas.")
     return items or []
 
 
@@ -457,12 +513,11 @@ def guess_hours(atype):
 
 def fetch_canvas_ics():
     """Fetch the Canvas ICS calendar feed (no auth needed)."""
-    print("   Fetching Canvas ICS feed...")
     try:
         resp = requests.get(ICS_URL, timeout=15)
         resp.raise_for_status()
     except Exception as e:
-        print(f"   ICS feed error: {e}")
+        _warn(f"ICS feed error: {e}")
         return []
 
     cal = Calendar.from_ical(resp.text)
@@ -496,7 +551,6 @@ def fetch_canvas_ics():
             "description": description,
         })
 
-    print(f"   Got {len(items)} events from ICS feed.")
     return items
 
 
@@ -510,13 +564,11 @@ def scrape_gradescope(driver, course_url_id, course_key, label):
 
     # Check if logged in
     if "login" in driver.current_url.lower() or "sessions" in driver.current_url.lower():
-        print(f"\n⚠  Please log into Gradescope in the browser window.")
-        print("   Press Enter here when done...")
+        print(f"\n  {_YELLOW}⚠{_RESET}  Please log into Gradescope in the browser window.")
+        print(f"       Press Enter here when done…")
         input()
         driver.get(url)
         time.sleep(3)
-
-    print(f"   Scraping {label} ({course_url_id})...")
 
     # Extract assignment data from the page
     try:
@@ -543,7 +595,7 @@ def scrape_gradescope(driver, course_url_id, course_key, label):
             return results;
         """)
     except JavascriptException as e:
-        print(f"   Gradescope scrape error for {label}: {e}")
+        _warn(f"Gradescope JS error for {label}: {e}")
         return [], []
 
     if not assignments_data:
@@ -601,7 +653,6 @@ def scrape_gradescope(driver, course_url_id, course_key, label):
         if submitted:
             submitted_ids.append(aid)
 
-    print(f"   Found {len(assignments)} assignments from {label}.")
     return assignments, submitted_ids
 
 
@@ -776,9 +827,8 @@ def validate_config():
         capture_output=True, text=True
     )
     if result.returncode != 0:
-        print(f"❌ Validation FAILED:\n{result.stderr}")
+        _err(f"Validation failed:\n{result.stderr}")
         return False
-    print(f"✅ {result.stdout.strip()}")
     return True
 
 
@@ -791,7 +841,6 @@ def git_push():
         if os.path.exists(tmp_dir):
             shutil.rmtree(tmp_dir)
 
-        print("   Cloning repo to /tmp for push...")
         subprocess.run(
             ["git", "clone", REPO_URL, tmp_dir],
             check=True, capture_output=True, text=True
@@ -806,7 +855,6 @@ def git_push():
             cwd=tmp_dir, capture_output=True, text=True
         )
         if not result.stdout.strip():
-            print("   No changes to push.")
             return False
 
         # Configure git and commit
@@ -819,13 +867,6 @@ def git_push():
         for cmd in cmds:
             subprocess.run(cmd, cwd=tmp_dir, check=True, capture_output=True)
 
-        # Show diff stat
-        result = subprocess.run(
-            ["git", "diff", "--cached", "--stat"],
-            cwd=tmp_dir, capture_output=True, text=True
-        )
-        print(f"   {result.stdout.strip()}")
-
         # Commit
         msg = f"chore: scrape {date_str} — update assignments + autoCompleted"
         subprocess.run(
@@ -833,17 +874,14 @@ def git_push():
             cwd=tmp_dir, check=True, capture_output=True, text=True
         )
 
-        # Push
-        print("   Pushing to GitHub...")
         subprocess.run(
             ["git", "push"],
             cwd=tmp_dir, check=True, capture_output=True, text=True
         )
-        print("   ✅ Pushed successfully.")
         return True
 
     except subprocess.CalledProcessError as e:
-        print(f"   ❌ Git error: {e.stderr}")
+        _err(f"Git error: {e.stderr}")
         return False
     finally:
         if os.path.exists(tmp_dir):
@@ -862,12 +900,17 @@ def main():
     parser.add_argument("--skip-ics", action="store_true", help="Skip ICS feed")
     args = parser.parse_args()
 
-    print(f"═══ Assignment Scraper — {TODAY} ═══\n")
+    print(f"\n{_BOLD}{'═' * 48}{_RESET}")
+    print(f"  {_BOLD}Assignment Scraper{_RESET}  {_GRAY}{TODAY}{_RESET}")
+    if args.dry_run:
+        print(f"  {_YELLOW}DRY RUN — no files will be modified{_RESET}")
+    print(f"{_BOLD}{'═' * 48}{_RESET}")
 
     # 1. Parse current config
-    print("1. Reading config.js...")
-    assignments, auto_completed, raw_text = parse_config()
-    print(f"   {len(assignments)} assignments, {len(auto_completed)} auto-completed\n")
+    _step_header(1, "Reading config.js")
+    with Spinner("Parsing config…"):
+        assignments, auto_completed, raw_text = parse_config()
+    _ok(f"{len(assignments)} assignments · {len(auto_completed)} auto-completed")
 
     all_new = []
     all_submitted = []
@@ -876,51 +919,62 @@ def main():
     try:
         # 2. Canvas ICS feed (no browser needed)
         if not args.skip_ics:
-            print("2. Fetching Canvas ICS feed...")
-            ics_events = fetch_canvas_ics()
-            # ICS events are used as supplementary data — we don't directly
-            # create assignments from ICS since the planner API is more detailed.
-            # But we can cross-reference dates.
-            print()
+            _step_header(2, "Fetching Canvas ICS feed")
+            with Spinner("Downloading ICS…"):
+                ics_events = fetch_canvas_ics()
+            _ok(f"{len(ics_events)} calendar events fetched")
+        else:
+            _step_header(2, "Canvas ICS feed")
+            _info("Skipped (--skip-ics)")
 
         # 3. Set up browser for Canvas API + Gradescope
         needs_browser = not (args.skip_canvas and args.skip_gradescope)
         if needs_browser:
-            print("3. Starting Chrome...")
-            driver = make_driver(headless=args.headless)
-            print()
+            _step_header(3, "Starting Chrome")
+            with Spinner("Launching browser" + (" (headless)" if args.headless else " — check your screen")):
+                driver = make_driver(headless=args.headless)
+            _ok("Browser ready")
+        else:
+            _step_header(3, "Chrome")
+            _info("Skipped (canvas + gradescope both skipped)")
 
         # 4. Canvas planner API
         if not args.skip_canvas and driver:
-            print("4. Scraping Canvas planner...")
-            canvas_items = scrape_canvas_planner(driver)
+            _step_header(4, "Canvas planner API")
+            with Spinner("Fetching planner items…"):
+                canvas_items = scrape_canvas_planner(driver)
             parsed = parse_canvas_items(canvas_items)
             all_new.extend(parsed)
-            print()
+            _ok(f"{len(canvas_items)} planner items → {len(parsed)} relevant assignments")
         else:
-            print("4. Skipping Canvas.\n")
+            _step_header(4, "Canvas planner")
+            _info("Skipped (--skip-canvas)")
 
         # 5. Gradescope
         if not args.skip_gradescope and driver:
-            print("5. Scraping Gradescope...")
+            _step_header(5, "Gradescope")
+            total_gs = 0
             for course_key, courses in GRADESCOPE_COURSES.items():
                 for course_info in courses:
-                    gs_assignments, gs_submitted = scrape_gradescope(
-                        driver, course_info["url_id"], course_key, course_info["label"]
-                    )
+                    with Spinner(f"Scraping {course_info['label']}…"):
+                        gs_assignments, gs_submitted = scrape_gradescope(
+                            driver, course_info["url_id"], course_key, course_info["label"]
+                        )
                     all_new.extend(gs_assignments)
                     all_submitted.extend(gs_submitted)
-            print()
+                    total_gs += len(gs_assignments)
+                    _ok(f"{course_info['label']}: {len(gs_assignments)} assignments"
+                        + (f" · {len(gs_submitted)} submitted" if gs_submitted else ""))
         else:
-            print("5. Skipping Gradescope.\n")
+            _step_header(5, "Gradescope")
+            _info("Skipped (--skip-gradescope)")
 
     finally:
         if driver:
             driver.quit()
 
     # 6. Merge
-    print("6. Merging assignments...")
-    # Mark submitted items
+    _step_header(6, "Merging assignments")
     submitted_set = set(all_submitted)
     for item in all_new:
         if item["id"] in submitted_set:
@@ -928,44 +982,72 @@ def main():
 
     merged, updated_ac, changes = merge_assignments(assignments, all_new, auto_completed)
 
+    added   = [c for c in changes if c.strip().startswith("ADDED")]
+    updated = [c for c in changes if c.strip().startswith("UPDATED")]
+    autocmp = [c for c in changes if c.strip().startswith("AUTO-COMPLETED")]
+
     if not changes:
-        print("   No changes detected.\n")
+        _ok("No changes detected — config is already up to date")
         if not args.dry_run:
-            # Still update scrapeDate
-            write_config(raw_text, merged, updated_ac)
+            with Spinner("Updating scrape date…"):
+                write_config(raw_text, merged, updated_ac)
             if validate_config() and not args.no_push:
-                git_push()
+                _step_header(9, "Pushing to GitHub")
+                with Spinner("Pushing…"):
+                    git_push()
+        _print_done(0, 0, 0)
         return
 
-    print(f"   {len(changes)} change(s):")
-    for c in changes:
-        print(c)
-    print()
+    _ok(f"{len(added)} added · {len(updated)} updated · {len(autocmp)} auto-completed")
+    for c in added:
+        _info(c.strip())
+    for c in updated:
+        _info(c.strip())
+    for c in autocmp:
+        _info(c.strip())
 
     if args.dry_run:
-        print("── Dry run — no files modified ──")
+        print(f"\n  {_YELLOW}Dry run complete — no files modified.{_RESET}")
+        _print_done(len(added), len(updated), len(autocmp))
         return
 
     # 7. Write config.js
-    print("7. Writing config.js...")
-    write_config(raw_text, merged, updated_ac)
-    print()
+    _step_header(7, "Writing config.js")
+    with Spinner("Saving…"):
+        write_config(raw_text, merged, updated_ac)
+    _ok(f"Saved → {CONFIG_PATH}")
 
     # 8. Validate
-    print("8. Validating config.js...")
-    if not validate_config():
-        print("   Aborting push due to validation failure.")
+    _step_header(8, "Validating config.js")
+    with Spinner("Checking syntax…"):
+        valid = validate_config()
+    if not valid:
+        _err("Validation failed — aborting")
         return
-    print()
+    _ok(f"{len(merged)} assignments · syntax OK")
 
     # 9. Push
+    _step_header(9, "Pushing to GitHub")
     if args.no_push:
-        print("9. Skipping push (--no-push).")
+        _info("Skipped (--no-push)")
     else:
-        print("9. Pushing to GitHub...")
-        git_push()
+        with Spinner("Cloning & pushing…"):
+            pushed = git_push()
+        if pushed:
+            _ok("Pushed to GitHub")
+        else:
+            _warn("Nothing to push or push failed")
 
-    print("\nDone!")
+    _print_done(len(added), len(updated), len(autocmp))
+
+
+def _print_done(added, updated, autocompleted):
+    print(f"\n{_BOLD}{'─' * 48}{_RESET}")
+    print(f"  {_GREEN}{_BOLD}Done!{_RESET}  "
+          f"{_GREEN}+{added} added{_RESET}  "
+          f"{_YELLOW}~{updated} updated{_RESET}  "
+          f"{_GRAY}✓{autocompleted} auto-completed{_RESET}")
+    print(f"{_BOLD}{'─' * 48}{_RESET}\n")
 
 
 if __name__ == "__main__":
