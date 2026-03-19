@@ -487,17 +487,6 @@
     border: 1px solid var(--border);
     background: var(--card);
     white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.2s, border-color 0.2s;
-  }
-  .sync-indicator:hover {
-    border-color: var(--accent, #2563eb);
-    background: var(--hover, #f0f4ff);
-  }
-  .sync-indicator.scraping {
-    pointer-events: none;
-    opacity: 0.7;
   }
   .sync-dot {
     width: 7px; height: 7px;
@@ -740,7 +729,7 @@
       <span class="theme-icon" id="themeIcon">&#9788;</span>
       <button class="dark-toggle" onclick="toggleTheme()" id="darkToggle" title="Toggle dark mode"></button>
     </div>
-    <div class="sync-indicator" id="syncIndicator" title="Click to re-scrape assignments" onclick="triggerScrape()">
+    <div class="sync-indicator" id="syncIndicator" title="Firebase sync status">
       <div class="sync-dot" id="syncDot"></div>
       <span id="syncLabel">Offline</span>
     </div>
@@ -888,66 +877,12 @@ let db = null;
 let doneRef = null;
 let firebaseReady = false;
 
-function isScrapeToday() {
-  try {
-    const scrapeDate = new Date(APP_CONFIG.scrapeDate);
-    const today = new Date();
-    return scrapeDate.toDateString() === today.toDateString();
-  } catch(e) { return false; }
-}
-
 function setSyncStatus(state) {
   const dot = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
-  const indicator = document.getElementById('syncIndicator');
   if (!dot || !label) return;
   dot.className = 'sync-dot ' + state;
-  if (state === 'synced') {
-    label.textContent = isScrapeToday() ? 'Synced today' : 'Synced';
-    if (indicator) indicator.title = 'Click to re-scrape assignments';
-  } else if (state === 'syncing') {
-    label.textContent = 'Syncing\u2026';
-  } else if (state === 'scraping') {
-    dot.className = 'sync-dot syncing';
-    label.textContent = 'Scraping\u2026';
-    if (indicator) indicator.title = 'Scraping assignments from Canvas & Gradescope\u2026';
-  } else if (state === 'error') {
-    label.textContent = 'Sync error';
-  } else {
-    label.textContent = 'Offline';
-  }
-}
-
-function triggerScrape() {
-  const indicator = document.getElementById('syncIndicator');
-  if (!indicator || indicator.classList.contains('scraping')) return;
-  indicator.classList.add('scraping');
-  setSyncStatus('scraping');
-
-  fetch('http://localhost:3847/scrape', { mode: 'cors' })
-    .then(r => r.json())
-    .then(data => {
-      indicator.classList.remove('scraping');
-      if (data.success) {
-        // Reload page to pick up updated config.js
-        setSyncStatus('synced');
-        setTimeout(() => location.reload(), 600);
-      } else {
-        setSyncStatus('error');
-        alert('Scrape failed:\n' + (data.error || 'Unknown error') +
-          (data.validation || ''));
-      }
-    })
-    .catch(err => {
-      indicator.classList.remove('scraping');
-      setSyncStatus('error');
-      alert(
-        'Could not reach scraper.\n\n' +
-        'Make sure the scraper server is running:\n' +
-        '  node run-scraper.js\n\n' +
-        'Error: ' + err.message
-      );
-    });
+  label.textContent = state === 'synced' ? 'Synced' : state === 'syncing' ? 'Syncing\u2026' : state === 'error' ? 'Sync error' : 'Offline';
 }
 
 function initFirebase() {

@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 17, 2026",
+  scrapeDate: "March 18, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -109,7 +109,6 @@ const APP_CONFIG = {
     { id: "270-exam1", name: "Exam 1", course: "eecs270", due: "2026-02-15", time: null, type: "exam", points: "100", hours: 12 },
     { id: "270-exam2", name: "Exam 2", course: "eecs270", due: "2026-03-20", time: null, type: "exam", points: "100", hours: 12 },
     { id: "270-final", name: "Final Exam", course: "eecs270", due: "2026-04-27", time: null, type: "exam", points: "100", hours: 15 },
-
     // ===== EECS 370 - Projects =====
     { id: "370-p1a", name: "Project 1a: Assembler", course: "eecs370", due: "2026-01-29", time: "11:55 PM", type: "project", points: "40", hours: 8, specUrl: "https://eecs370.github.io/project_1_spec" },
     { id: "370-p1m", name: "Project 1m: Multiplication", course: "eecs370", due: "2026-02-05", time: "11:55 PM", type: "project", points: "20", hours: 4, specUrl: "https://eecs370.github.io/project_1_spec" },
@@ -135,7 +134,6 @@ const APP_CONFIG = {
     // EECS 370 - Exams
     { id: "370-midterm", name: "Midterm Exam", course: "eecs370", due: "2026-02-24", time: "7:00 PM", type: "exam", points: "100", hours: 12 },
     { id: "370-final", name: "Final Exam", course: "eecs370", due: "2026-04-23", time: "10:30 AM", type: "exam", points: "100", hours: 15 },
-
     // ===== EECS 442 - Homeworks =====
     { id: "442-hw1", name: "HW1: Faces", course: "eecs442", due: "2026-01-29", time: "5:29 PM", type: "homework", points: "120", hours: 10 },
     { id: "442-hw2", name: "HW2: Filtering", course: "eecs442", due: "2026-02-05", time: "5:30 PM", type: "homework", points: "120", hours: 10 },
@@ -153,7 +151,6 @@ const APP_CONFIG = {
     { id: "442-q9", name: "Quiz 9 (03/16)", course: "eecs442", due: "2026-03-16", time: "11:39 AM", type: "quiz", points: "5", hours: 0.5 },
     // EECS 442 - Exams
     { id: "442-midterm", name: "Midterm Evaluation", course: "eecs442", due: "2026-03-14", time: "11:59 PM", type: "exam", points: "—", hours: 12 },
-
     // ===== STATS 250 - EPs =====
     { id: "s250-ep01", name: "EP 01", course: "stats250", due: "2026-01-23", time: "1:00 PM", type: "ep", points: "40", hours: 2 },
     { id: "s250-ep02", name: "EP 02", course: "stats250", due: "2026-01-30", time: "1:00 PM", type: "ep", points: "40", hours: 2 },
@@ -204,7 +201,6 @@ const APP_CONFIG = {
     { id: "s250-l13gw", name: "Lecture 13 GW", course: "stats250", due: "2026-03-11", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
     { id: "s250-l14pw", name: "Lecture 14 PW", course: "stats250", due: "2026-03-16", time: "2:30 PM", type: "lecture", points: "10", hours: 0.5 },
     { id: "s250-l14gw", name: "Lecture 14 GW", course: "stats250", due: "2026-03-16", time: "4:00 PM", type: "lecture", points: "20", hours: 0.5 },
-
     // ===== TCHNCLCM 300 =====
     { id: "tc-survey", name: "Pre-Course Survey", course: "tc300", due: "2026-01-16", time: "11:59 PM", type: "assignment", points: "1", hours: 0.25 },
     { id: "tc-syllabus", name: "Syllabus Agreement", course: "tc300", due: "2026-01-16", time: "11:59 PM", type: "assignment", points: "2", hours: 0.25 },

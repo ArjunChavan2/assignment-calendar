@@ -121,6 +121,7 @@ from icalendar import Calendar
 CONFIG_PATH = Path.home() / "tasky" / "assignment-calendar" / "config.js"
 REPO_URL = "https://github.com/ArjunChavan2/assignment-calendar.git"
 CANVAS_BASE = "https://umich.instructure.com"
+GOOGLE_ACCOUNT = "akchavan@umich.edu"
 ICS_URL = (
     "https://umich.instructure.com/feeds/calendars/"
     "user_1wR4Rqnv0y18q736ayBsqVKlbdf5xyjUUDKUyfDa.ics"
@@ -330,8 +331,31 @@ def write_config(raw_text, assignments, auto_completed):
 
 # ── Selenium setup ─────────────────────────────────────────────────────
 
+CHROME_DEBUG_PORT = 9222
+
+
 def make_driver(headless=False):
-    """Create a Chrome WebDriver using a persistent profile for auth."""
+    """
+    Connect to an already-running Chrome (via remote debugging) if available,
+    so existing sessions and cookies are reused with no login required.
+    Falls back to launching a new Chrome with a persistent profile.
+    """
+    # Try attaching to the user's existing Chrome first
+    try:
+        opts = ChromeOptions()
+        opts.debugger_address = f"127.0.0.1:{CHROME_DEBUG_PORT}"
+        driver = webdriver.Chrome(options=opts)
+        driver.implicitly_wait(5)
+        _ok(f"Attached to existing Chrome on port {CHROME_DEBUG_PORT} — using your saved sessions")
+        return driver
+    except Exception as e:
+        _warn(f"Could not attach to existing Chrome (port {CHROME_DEBUG_PORT}): {e}")
+        _warn("Falling back to a fresh Chrome profile — you may need to log in")
+        _info(f"To fix: quit Chrome, then run: chrome")
+        _info(f"Then verify with: curl http://localhost:{CHROME_DEBUG_PORT}/json/version")
+
+    # Fall back: launch a new Chrome with a persistent profile
+    _info("Launching new Chrome instance with saved profile…")
     opts = ChromeOptions()
     opts.add_argument(f"--user-data-dir={CHROME_PROFILE_DIR}")
     opts.add_argument("--no-first-run")
@@ -343,11 +367,98 @@ def make_driver(headless=False):
     return driver
 
 
+LOGIN_TIMEOUT = 120  # seconds to wait for manual login before giving up
+
+
+def _google_active_accounts(driver):
+    """Return the set of Google account emails currently signed in to the browser."""
+    try:
+        driver.get("https://accounts.google.com/")
+        time.sleep(3)
+        # accounts.google.com lists signed-in accounts as data-email attributes
+        # and also in aria-labels; innerText is the most reliable fallback.
+        emails = driver.execute_script("""
+            const els = document.querySelectorAll('[data-email], [aria-label*="@"]');
+            const found = new Set();
+            els.forEach(el => {
+                const e = el.getAttribute('data-email') || el.getAttribute('aria-label') || '';
+                const m = e.match(/[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}/i);
+                if (m) found.add(m[0].toLowerCase());
+            });
+            // Also scan body text as a fallback
+            const body = document.body.innerText || '';
+            const re = /[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}/gi;
+            let m;
+            while ((m = re.exec(body)) !== null) found.add(m[0].toLowerCase());
+            return Array.from(found);
+        """)
+        return set(e.lower() for e in (emails or []))
+    except Exception:
+        return set()
+
+
+def ensure_google_account(driver):
+    """
+    Verify the browser is signed into GOOGLE_ACCOUNT.
+    If not, wait up to LOGIN_TIMEOUT seconds for the user to switch accounts.
+    Returns True if the account is confirmed, False if timed out.
+    """
+    target = GOOGLE_ACCOUNT.lower()
+    accounts = _google_active_accounts(driver)
+
+    if target in accounts:
+        _ok(f"Google account verified: {GOOGLE_ACCOUNT}")
+        return True
+
+    # Not signed in with the right account — tell the user and poll.
+    if accounts:
+        _warn(f"Signed in as: {', '.join(sorted(accounts))}")
+    else:
+        _warn("No Google account detected")
+
+    print(f"\n  {_YELLOW}⚠{_RESET}  Please sign into {_BOLD}{GOOGLE_ACCOUNT}{_RESET} in the browser window.")
+    print(f"       Go to accounts.google.com → Add account, then come back.")
+    sys.stdout.flush()
+
+    if sys.stdin.isatty():
+        print(f"       Press Enter when done…")
+        input()
+        accounts = _google_active_accounts(driver)
+        if target in accounts:
+            _ok(f"Google account verified: {GOOGLE_ACCOUNT}")
+            return True
+        _err(f"Still not signed in as {GOOGLE_ACCOUNT} — aborting")
+        return False
+
+    # No TTY — poll until the account appears or timeout.
+    deadline = time.time() + LOGIN_TIMEOUT
+    while time.time() < deadline:
+        time.sleep(4)
+        remaining = int(deadline - time.time())
+        sys.stdout.write(f"\r       Checking for {GOOGLE_ACCOUNT}… ({remaining}s remaining)   ")
+        sys.stdout.flush()
+        accounts = _google_active_accounts(driver)
+        if target in accounts:
+            sys.stdout.write("\r" + " " * 60 + "\r")
+            sys.stdout.flush()
+            _ok(f"Google account verified: {GOOGLE_ACCOUNT}")
+            return True
+
+    sys.stdout.write("\r" + " " * 60 + "\r")
+    sys.stdout.flush()
+    _err(f"Timed out waiting for {GOOGLE_ACCOUNT} — aborting scrape")
+    return False
+
+
 def wait_for_login(driver, url, check_fn, service_name):
-    """Navigate to url; if check_fn(driver) is False, prompt user to log in."""
+    """Navigate to url; if check_fn(driver) is False, wait for the user to log in."""
     driver.get(url)
     time.sleep(3)
-    if not check_fn(driver):
+    if check_fn(driver):
+        return True
+
+    # Not logged in — wait for the user to log in via the visible browser window.
+    if sys.stdin.isatty():
         print(f"\n  {_YELLOW}⚠{_RESET}  Please log into {_BOLD}{service_name}{_RESET} in the browser window.")
         print(f"       Press Enter here when done…")
         input()
@@ -355,7 +466,28 @@ def wait_for_login(driver, url, check_fn, service_name):
         if not check_fn(driver):
             _warn(f"Still not logged into {service_name} — skipping")
             return False
-    return True
+        return True
+
+    # No TTY (running from run-scraper.js) — poll until logged in or timeout.
+    print(f"\n  {_YELLOW}⚠{_RESET}  {_BOLD}{service_name}{_RESET} needs login — waiting up to {LOGIN_TIMEOUT}s…")
+    print(f"       Log in via the browser window that just opened.")
+    sys.stdout.flush()
+    deadline = time.time() + LOGIN_TIMEOUT
+    interval = 3
+    while time.time() < deadline:
+        time.sleep(interval)
+        remaining = int(deadline - time.time())
+        sys.stdout.write(f"\r       Checking… ({remaining}s remaining)   ")
+        sys.stdout.flush()
+        if check_fn(driver):
+            sys.stdout.write("\r" + " " * 50 + "\r")
+            sys.stdout.flush()
+            _ok(f"Logged into {service_name}")
+            return True
+    sys.stdout.write("\r" + " " * 50 + "\r")
+    sys.stdout.flush()
+    _err(f"Timed out waiting for {service_name} login — skipping")
+    return False
 
 
 # ── Canvas scraping ────────────────────────────────────────────────────
@@ -562,13 +694,16 @@ def scrape_gradescope(driver, course_url_id, course_key, label):
     driver.get(url)
     time.sleep(3)
 
-    # Check if logged in
+    # Check if logged in — reuse wait_for_login's polling logic
     if "login" in driver.current_url.lower() or "sessions" in driver.current_url.lower():
-        print(f"\n  {_YELLOW}⚠{_RESET}  Please log into Gradescope in the browser window.")
-        print(f"       Press Enter here when done…")
-        input()
-        driver.get(url)
-        time.sleep(3)
+        logged_in = wait_for_login(
+            driver, url,
+            lambda d: "login" not in d.current_url.lower() and "sessions" not in d.current_url.lower(),
+            "Gradescope"
+        )
+        if not logged_in:
+            return [], []
+        time.sleep(2)
 
     # Extract assignment data from the page
     try:
@@ -927,13 +1062,15 @@ def main():
             _step_header(2, "Canvas ICS feed")
             _info("Skipped (--skip-ics)")
 
-        # 3. Set up browser for Canvas API + Gradescope
+        # 3. Set up browser and verify Google account
         needs_browser = not (args.skip_canvas and args.skip_gradescope)
         if needs_browser:
-            _step_header(3, "Starting Chrome")
+            _step_header(3, "Starting Chrome · verifying Google account")
             with Spinner("Launching browser" + (" (headless)" if args.headless else " — check your screen")):
                 driver = make_driver(headless=args.headless)
             _ok("Browser ready")
+            if not ensure_google_account(driver):
+                return  # wrong/missing account and timed out
         else:
             _step_header(3, "Chrome")
             _info("Skipped (canvas + gradescope both skipped)")
