@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 18, 2026",
+  scrapeDate: "March 19, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -75,10 +75,10 @@ const APP_CONFIG = {
   // due (YYYY-MM-DD), time (string or null), type, points, hours
   assignments: [
     // ===== EECS 270 - Projects =====
-    { id: "270-p1", name: "Project 1: Selector", course: "eecs270", due: "2026-01-23", time: "11:59 PM", type: "project", points: "50", hours: 6, specUrl: "https://umich.instructure.com/courses/815882/pages/project-1-selector" },
+    { id: "270-p1", name: "Project 1: Selector", course: "eecs270", due: "2026-01-20", time: "11:59 PM", type: "project", points: "50", hours: 6, specUrl: "https://umich.instructure.com/courses/815882/pages/project-1-selector" },
     { id: "270-p1-signoff", name: "Project 1 Signoff", course: "eecs270", due: "2026-01-23", time: "11:59 PM", type: "project", points: "3", hours: 0.5 },
-    { id: "270-p2a", name: "Project 2A: Robot Control (Autograde)", course: "eecs270", due: "2026-02-20", time: "11:59 PM", type: "project", points: "25", hours: 5, specUrl: "https://umich.instructure.com/courses/815882/pages/project-2-robot-control" },
-    { id: "270-p2b", name: "Project 2B: Robot Control (Autograde)", course: "eecs270", due: "2026-02-20", time: "11:59 PM", type: "project", points: "57", hours: 7, specUrl: "https://umich.instructure.com/courses/815882/pages/project-2-robot-control" },
+    { id: "270-p2a", name: "Project 2A: Robot Control (Autograde)", course: "eecs270", due: "2026-02-06", time: "11:59 PM", type: "project", points: "25", hours: 5, specUrl: "https://umich.instructure.com/courses/815882/pages/project-2-robot-control" },
+    { id: "270-p2b", name: "Project 2B: Robot Control (Autograde)", course: "eecs270", due: "2026-02-06", time: "11:59 PM", type: "project", points: "57", hours: 7, specUrl: "https://umich.instructure.com/courses/815882/pages/project-2-robot-control" },
     { id: "270-p2a-signoff", name: "Project 2A Signoff", course: "eecs270", due: "2026-02-20", time: "11:59 PM", type: "project", points: "3", hours: 0.5 },
     { id: "270-p2b-signoff", name: "Project 2B Signoff", course: "eecs270", due: "2026-02-20", time: "11:59 PM", type: "project", points: "5", hours: 0.5 },
     { id: "270-p3-auto", name: "Project 3: Combinational Calculator", course: "eecs270", due: "2026-02-24", time: "11:59 PM", type: "project", points: "109", hours: 10, specUrl: "https://umich.instructure.com/courses/815882/pages/project-3-combinational-calculator" },
@@ -87,7 +87,7 @@ const APP_CONFIG = {
     { id: "270-p5", name: "Project 5: Up-Down Counter", course: "eecs270", due: "2026-03-11", time: "11:59 PM", type: "project", points: "-", hours: 8, specUrl: "https://umich.instructure.com/courses/815882/pages/project-5-up-down-counter" },
     { id: "270-p6", name: "Project 6: Traffic Light Controller", course: "eecs270", due: "2026-04-01", time: "11:59 PM", type: "project", points: "-", hours: 10, specUrl: "https://umich.instructure.com/courses/815882/pages/project-6-traffic-light-controller" },
     { id: "270-p7", name: "Project 7: Sequential Calculator", course: "eecs270", due: "2026-04-20", time: "11:59 PM", type: "project", points: "-", hours: 12, specUrl: "https://umich.instructure.com/courses/815882/pages/project-7-sequential-calculator" },
-    { id: "270-p3", name: "Project 3 Autograde", course: "eecs270", due: "2026-03-02", time: "11:59 PM", type: "project", points: "109", hours: 8 },
+    { id: "270-p3", name: "Project 3 Autograde", course: "eecs270", due: "2026-02-24", time: "11:59 PM", type: "project", points: "109", hours: 8 },
     // EECS 270 - Quizzes
     { id: "270-q1", name: "Quiz 1 (Switching Func.)", course: "eecs270", due: "2026-01-13", time: "11:59 PM", type: "quiz", points: "23", hours: 1.5 },
     { id: "270-q2", name: "Quiz 2 (Boolean Algebra)", course: "eecs270", due: "2026-01-15", time: "11:59 PM", type: "quiz", points: "21", hours: 1.5 },
@@ -103,12 +103,12 @@ const APP_CONFIG = {
     { id: "270-q12", name: "Quiz 12 (Sequential Blocks)", course: "eecs270", due: "2026-03-12", time: "11:59 PM", type: "quiz", points: "21", hours: 1.5 },
     { id: "270-q14", name: "Quiz 14 (RTL Design)", course: "eecs270", due: "2026-03-27", time: "11:59 PM", type: "quiz", points: "20", hours: 1.5 },
     { id: "270-q15", name: "Quiz 15 (Seq. Timing Analysis)", course: "eecs270", due: "2026-04-03", time: "11:59 PM", type: "quiz", points: "20", hours: 1.5 },
-    { id: "270-q16", name: "Quiz 16 (Seq. Multiplication)", course: "eecs270", due: "2026-04-03", time: "11:59 PM", type: "quiz", points: "16", hours: 1.5 },
+    { id: "270-q16", name: "Quiz 16 (Seq. Multiplication)", course: "eecs270", due: "2026-04-01", time: "11:59 PM", type: "quiz", points: "16", hours: 1.5 },
     { id: "270-q17", name: "Quiz 17 (Carry-Lookahead Adders)", course: "eecs270", due: "2026-04-14", time: "11:59 PM", type: "quiz", points: "22", hours: 1.5 },
     { id: "270-q18", name: "Quiz 18 (State Minimization)", course: "eecs270", due: "2026-04-16", time: "11:59 PM", type: "quiz", points: "20", hours: 1.5 },
     { id: "270-q13", name: "Quiz 13 (RTL Design)", course: "eecs270", due: "2026-03-19", time: "11:59 PM", type: "quiz", points: "20", hours: 1.5 },
     // EECS 270 - Exams
-    { id: "270-exam1", name: "Exam 1", course: "eecs270", due: "2026-02-20", time: "4:38 PM", type: "exam", points: "100", hours: 12 },
+    { id: "270-exam1", name: "Exam 1", course: "eecs270", due: "2026-02-05", time: "3:35 PM", type: "exam", points: "100", hours: 12 },
     { id: "270-exam2", name: "Exam 2", course: "eecs270", due: "2026-03-12", time: "5:02 PM", type: "exam", points: "100", hours: 12 },
     { id: "270-final", name: "Final Exam", course: "eecs270", due: "2026-04-27", time: null, type: "exam", points: "100", hours: 15 },
     // EECS 270
@@ -121,7 +121,7 @@ const APP_CONFIG = {
     { id: "370-p2l", name: "Project 2l: Linker", course: "eecs370", due: "2026-03-19", time: "11:55 PM", type: "project", points: "45", hours: 10, specUrl: "https://eecs370.github.io/project_2_spec" },
     { id: "370-p2r", name: "Project 2r: Relocation", course: "eecs370", due: "2026-03-19", time: "11:55 PM", type: "project", points: "20", hours: 5, specUrl: "https://eecs370.github.io/project_2_spec" },
     { id: "370-p3-cp", name: "Project 3 Checkpoint", course: "eecs370", due: "2026-03-26", time: "11:55 PM", type: "project", points: "5", hours: 3 },
-    { id: "370-p3", name: "Project 3", course: "eecs370", due: "2026-04-02", time: "11:55 PM", type: "project", points: "95", hours: 15 },
+    { id: "370-p3", name: "Project 3", course: "eecs370", due: "2026-03-26", time: "11:55 PM", type: "project", points: "95", hours: 15 },
     { id: "370-p4", name: "Project 4", course: "eecs370", due: "2026-04-16", time: "11:55 PM", type: "project", points: "100", hours: 15 },
     // EECS 370 - Homeworks
     { id: "370-hw1", name: "Homework 1", course: "eecs370", due: "2026-02-02", time: "11:55 PM", type: "homework", points: "100", hours: 6, specUrl: "https://eecs370.github.io/homework/index.html" },
