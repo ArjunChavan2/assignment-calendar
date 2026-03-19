@@ -44,7 +44,7 @@ function runCommand(cmd, args, label) {
     const start = Date.now();
     const proc = execFile(cmd, args, {
       cwd: DIR,
-      timeout: 5 * 60 * 1000, // 5 min max
+      timeout: 10 * 60 * 1000, // 10 min max
       maxBuffer: 10 * 1024 * 1024,
     }, (err, stdout, stderr) => {
       const elapsed = ((Date.now() - start) / 1000).toFixed(1);
@@ -72,7 +72,9 @@ async function handleScrape(req, res) {
 
   try {
     // Step 1: Run scraper
-    const scrapeResult = await runCommand(PYTHON, [SCRAPER, '--headless', '--no-push'], 'scrape_assignments.py');
+    // Run without --headless so the browser window is visible if login is needed.
+    // The browser profile persists auth cookies, so most runs won't need interaction.
+    const scrapeResult = await runCommand(PYTHON, [SCRAPER, '--no-push'], 'scrape_assignments.py');
 
     // Step 2: Run validator
     let validationResult;
