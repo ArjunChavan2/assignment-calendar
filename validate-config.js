@@ -196,6 +196,10 @@ function autoFix(config, issues) {
       toRemoveIdxs.add(issue.idx);
       fixed++;
     }
+    if (issue.fixable === 'duplicate-name' && issue.idx >= 0) {
+      toRemoveIdxs.add(issue.idx);
+      fixed++;
+    }
     if (issue.fixable === 'stale-autocomplete') {
       const match = issue.msg.match(/stale id "(.+?)"/);
       if (match) staleACIds.add(match[1]);

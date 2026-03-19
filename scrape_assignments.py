@@ -39,7 +39,7 @@ _RED    = "\x1b[31m"
 _CYAN   = "\x1b[36m"
 _GRAY   = "\x1b[90m"
 
-_TOTAL_STEPS = 9
+_TOTAL_STEPS = 11
 
 def _step_header(n, label):
     bar = f"{_BOLD}{_CYAN}[{n}/{_TOTAL_STEPS}]{_RESET}"
@@ -686,6 +686,328 @@ def fetch_canvas_ics():
     return items
 
 
+# ── Course website scraping ───────────────────────────────────────────
+
+EECS270_URL = "https://www.eecs270.org/"
+EECS370_URL = "https://eecs370.github.io/"
+
+
+def scrape_eecs270_website(driver):
+    """Scrape eecs270.org for projects, quizzes, exams with due dates."""
+    driver.get(EECS270_URL)
+    time.sleep(3)
+
+    try:
+        data = driver.execute_script("""
+            const results = [];
+
+            // 1. Project cards — look for elements with "Due" dates
+            //    Cards have headings like "Project N: Name" and a red badge with "Due: Date"
+            const allText = document.body.innerText;
+
+            // 2. Parse schedule table for quizzes, labs, exams, and project deadlines
+            const tables = document.querySelectorAll('table');
+            for (const table of tables) {
+                const rows = table.querySelectorAll('tr');
+                let currentDate = '';
+                for (const row of rows) {
+                    const cells = row.querySelectorAll('td, th');
+                    if (cells.length < 2) continue;
+
+                    // First cell is often the date
+                    const dateCell = cells[0]?.textContent?.trim();
+                    if (dateCell && /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|\\d)/.test(dateCell)) {
+                        currentDate = dateCell;
+                    }
+
+                    // Scan all cells for assignment names
+                    for (const cell of cells) {
+                        const text = cell.textContent.trim();
+
+                        // Quiz N
+                        const qm = text.match(/Quiz\\s*(\\d+)/i);
+                        if (qm) {
+                            results.push({
+                                name: `Quiz ${qm[1]}`,
+                                type: 'quiz',
+                                date: currentDate,
+                                id: `270-q${qm[1]}`
+                            });
+                        }
+
+                        // Exam
+                        if (/Exam\\s*\\d/i.test(text) && !/conflict/i.test(text)) {
+                            const em = text.match(/Exam\\s*(\\d)/i);
+                            if (em) {
+                                // Extract time if present
+                                const timeMatch = text.match(/(\\d{1,2}[:-]\\d{2}\\s*(pm|am|PM|AM))/);
+                                results.push({
+                                    name: `Exam ${em[1]}`,
+                                    type: 'exam',
+                                    date: currentDate,
+                                    time: timeMatch ? timeMatch[1] : null,
+                                    id: `270-exam${em[1]}`
+                                });
+                            }
+                        }
+
+                        // Final Exam
+                        if (/Final\\s*Exam/i.test(text)) {
+                            const timeMatch = text.match(/(\\d{1,2}[:-]\\d{2}\\s*(pm|am|PM|AM))/);
+                            results.push({
+                                name: 'Final Exam',
+                                type: 'exam',
+                                date: currentDate || text,
+                                time: timeMatch ? timeMatch[1] : null,
+                                id: '270-final'
+                            });
+                        }
+                    }
+                }
+            }
+
+            // 3. Project cards with due dates
+            //    Look for headings + due dates in cards/sections
+            const headings = document.querySelectorAll('h2, h3, h4, [class*="card"] h2, [class*="card"] h3');
+            headings.forEach(h => {
+                const text = h.textContent.trim();
+                const pm = text.match(/Project\\s*(\\d+)/i);
+                if (pm) {
+                    // Look for a "Due" date near this heading
+                    let dueText = '';
+                    let el = h.nextElementSibling || h.parentElement;
+                    // Search siblings and parent for due date text
+                    for (let i = 0; i < 5 && el; i++) {
+                        const t = el.textContent || '';
+                        const dm = t.match(/Due[:\\s]+(\\w+ \\d{1,2}(?:,?\\s*\\d{4})?)/i);
+                        if (dm) { dueText = dm[1]; break; }
+                        el = el.nextElementSibling;
+                    }
+                    // Also check parent container
+                    if (!dueText) {
+                        const parent = h.closest('div, section, article');
+                        if (parent) {
+                            const dm = parent.textContent.match(/Due[:\\s]+(\\w+ \\d{1,2}(?:,?\\s*\\d{4})?)/i);
+                            if (dm) dueText = dm[1];
+                        }
+                    }
+                    results.push({
+                        name: text,
+                        type: 'project',
+                        date: dueText,
+                        id: `270-p${pm[1]}`
+                    });
+                }
+            });
+
+            return results;
+        """)
+    except Exception as e:
+        _warn(f"eecs270.org scrape error: {e}")
+        return []
+
+    # Convert to our assignment format
+    assignments = []
+    seen_ids = set()
+    for item in (data or []):
+        aid = item.get("id", "")
+        if not aid or aid in seen_ids:
+            continue
+        seen_ids.add(aid)
+
+        due_date = _parse_course_date(item.get("date", ""))
+        if not due_date:
+            continue
+
+        assignments.append({
+            "id": aid,
+            "name": item["name"],
+            "course": "eecs270",
+            "due": due_date,
+            "time": item.get("time"),
+            "type": item.get("type", "assignment"),
+            "points": "—",
+            "hours": guess_hours(item.get("type", "assignment")),
+        })
+
+    return assignments
+
+
+def scrape_eecs370_website(driver):
+    """Scrape eecs370.github.io schedule table for projects, homeworks, exams."""
+    driver.get(EECS370_URL)
+    time.sleep(3)
+
+    try:
+        data = driver.execute_script("""
+            const results = [];
+
+            // Parse all tables — the schedule table has columns: Day, Lecture, Lab, Deadline, Readings
+            const tables = document.querySelectorAll('table');
+            for (const table of tables) {
+                const headers = Array.from(table.querySelectorAll('th')).map(h => h.textContent.trim().toLowerCase());
+                const dayIdx = headers.findIndex(h => h.includes('day'));
+                const deadlineIdx = headers.findIndex(h => h.includes('deadline'));
+                if (dayIdx === -1 || deadlineIdx === -1) continue;
+
+                const rows = table.querySelectorAll('tbody tr, tr');
+                let currentDate = '';
+                for (const row of rows) {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length <= Math.max(dayIdx, deadlineIdx)) continue;
+
+                    const dayText = cells[dayIdx]?.textContent?.trim() || '';
+                    const deadlineText = cells[deadlineIdx]?.textContent?.trim() || '';
+
+                    // Update current date
+                    if (dayText && /\\w{3}\\s+\\w{3}\\s+\\d/.test(dayText)) {
+                        currentDate = dayText;
+                    }
+
+                    if (!deadlineText || deadlineText === '-') continue;
+
+                    // Parse deadline text: "P1a", "P2a", "HW 1", "P3 Checkpoint", etc.
+                    // Project parts: P1a, P1s, P1m, P2a, P2l, P2r, P3, P4
+                    const projMatch = deadlineText.match(/P(\\d)([a-z])?/g);
+                    if (projMatch) {
+                        projMatch.forEach(p => {
+                            const m = p.match(/P(\\d)([a-z])?/);
+                            if (m) {
+                                const suffix = m[2] || '';
+                                results.push({
+                                    name: `Project ${m[1]}${suffix ? ' (' + suffix.toUpperCase() + ')' : ''}`,
+                                    type: 'project',
+                                    date: currentDate,
+                                    id: `370-p${m[1]}${suffix}`
+                                });
+                            }
+                        });
+                    }
+
+                    // Homework: "HW 1", "HW 2", etc.
+                    const hwMatch = deadlineText.match(/HW\\s*(\\d+)/gi);
+                    if (hwMatch) {
+                        hwMatch.forEach(hw => {
+                            const m = hw.match(/HW\\s*(\\d+)/i);
+                            if (m) {
+                                results.push({
+                                    name: `Homework ${m[1]}`,
+                                    type: 'homework',
+                                    date: currentDate,
+                                    id: `370-hw${m[1]}`
+                                });
+                            }
+                        });
+                    }
+
+                    // Pre-Lab: "Pre-Lab N"
+                    const plMatch = deadlineText.match(/Pre-?Lab\\s*(\\d+)/gi);
+                    if (plMatch) {
+                        plMatch.forEach(pl => {
+                            const m = pl.match(/Pre-?Lab\\s*(\\d+)/i);
+                            if (m) {
+                                results.push({
+                                    name: `Pre-Lab ${m[1]}`,
+                                    type: 'prelab',
+                                    date: currentDate,
+                                    id: `370-pl${m[1]}`
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Exam info section — look for Midterm and Final
+            const body = document.body.innerText;
+
+            const midMatch = body.match(/Midterm[:\\s]*.*?(\\w+day,?\\s+\\w+\\s+\\d{1,2}(?:th|st|nd|rd)?(?:,?\\s*\\d{4})?).*?(\\d{1,2}:\\d{2}\\s*(?:AM|PM))/i);
+            if (midMatch) {
+                results.push({
+                    name: 'Midterm',
+                    type: 'exam',
+                    date: midMatch[1],
+                    time: midMatch[2],
+                    id: '370-midterm'
+                });
+            }
+
+            const finalMatch = body.match(/Final[:\\s]*.*?(\\w+day,?\\s+\\w+\\s+\\d{1,2}(?:th|st|nd|rd)?(?:,?\\s*\\d{4})?).*?(\\d{1,2}:\\d{2}\\s*(?:AM|PM))/i);
+            if (finalMatch) {
+                results.push({
+                    name: 'Final Exam',
+                    type: 'exam',
+                    date: finalMatch[1],
+                    time: finalMatch[2],
+                    id: '370-final'
+                });
+            }
+
+            return results;
+        """)
+    except Exception as e:
+        _warn(f"eecs370.github.io scrape error: {e}")
+        return []
+
+    # Convert to our assignment format
+    assignments = []
+    seen_ids = set()
+    for item in (data or []):
+        aid = item.get("id", "")
+        if not aid or aid in seen_ids:
+            continue
+        seen_ids.add(aid)
+
+        due_date = _parse_course_date(item.get("date", ""))
+        if not due_date:
+            continue
+
+        assignments.append({
+            "id": aid,
+            "name": item["name"],
+            "course": "eecs370",
+            "due": due_date,
+            "time": item.get("time"),
+            "type": item.get("type", "assignment"),
+            "points": "—",
+            "hours": guess_hours(item.get("type", "assignment")),
+        })
+
+    return assignments
+
+
+def _parse_course_date(text):
+    """Parse dates from course websites like 'Thu Jan 29', 'January 20, 2026', 'Mar 11'."""
+    if not text:
+        return None
+
+    text = text.strip()
+    # Remove ordinal suffixes (1st, 2nd, 3rd, 23th, etc.)
+    text = re.sub(r'(\d+)(st|nd|rd|th)', r'\1', text)
+    # Remove leading day-of-week (Thu, Monday, etc.)
+    text = re.sub(r'^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\w*[,\s]+', '', text, flags=re.IGNORECASE)
+
+    # Try common date formats
+    for fmt in [
+        "%B %d, %Y",   # January 20, 2026
+        "%B %d %Y",    # January 20 2026
+        "%b %d, %Y",   # Jan 20, 2026
+        "%b %d %Y",    # Jan 20 2026
+        "%B %d",        # January 20
+        "%b %d",        # Jan 20
+    ]:
+        try:
+            dt = datetime.strptime(text.strip(), fmt)
+            # Default to 2026 if no year
+            if dt.year == 1900:
+                dt = dt.replace(year=2026)
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+
+    return None
+
+
 # ── Gradescope scraping ───────────────────────────────────────────────
 
 def scrape_gradescope(driver, course_url_id, course_key, label):
@@ -903,21 +1225,44 @@ def guess_gradescope_type(course_key, name):
 
 # ── Merge logic ────────────────────────────────────────────────────────
 
+def _normalize_name(name):
+    """Normalize an assignment name for fuzzy matching."""
+    return re.sub(r'[^a-z0-9]+', '', name.lower())
+
+
 def merge_assignments(existing, new_items, auto_completed):
     """
     Merge new scraped assignments into the existing list.
-    - Adds new assignments not already present (by ID).
-    - Updates due dates/times if they've changed.
+    - Deduplicates new_items from multiple sources before merging.
+    - Skips items that match existing ones by ID OR by similar name+course.
+    - Updates due dates/times only if they've changed.
     - Adds past-due submitted items to autoCompleted.
     Returns (merged_assignments, updated_autoCompleted, changes_log).
     """
     existing_by_id = {a["id"]: a for a in existing}
+    # Build a name lookup: "course::normalized_name" → id for fuzzy matching
+    existing_by_name = {}
+    for a in existing:
+        key = f"{a['course']}::{_normalize_name(a['name'])}"
+        existing_by_name[key] = a["id"]
+
     changes = []
 
+    # Step 1: Deduplicate new_items themselves (multiple sources may produce the same item)
+    deduped = {}
     for item in new_items:
         aid = item["id"]
+        if aid not in deduped:
+            deduped[aid] = item
+    new_items = list(deduped.values())
+
+    # Step 2: Merge into existing
+    for item in new_items:
+        aid = item["id"]
+        name_key = f"{item['course']}::{_normalize_name(item['name'])}"
+
+        # Check exact ID match
         if aid in existing_by_id:
-            # Check if due date/time changed
             old = existing_by_id[aid]
             if old["due"] != item["due"]:
                 changes.append(f"  UPDATED {aid}: due {old['due']} → {item['due']}")
@@ -925,16 +1270,21 @@ def merge_assignments(existing, new_items, auto_completed):
             if old.get("time") != item.get("time") and item.get("time"):
                 changes.append(f"  UPDATED {aid}: time {old.get('time')} → {item['time']}")
                 old["time"] = item["time"]
-        else:
-            # New assignment — insert it
-            # Find the right position (after last assignment of same course & type)
-            insert_idx = len(existing)
-            for i, a in enumerate(existing):
-                if a["course"] == item["course"] and a.get("type") == item.get("type"):
-                    insert_idx = i + 1
-            existing.insert(insert_idx, item)
-            existing_by_id[aid] = item
-            changes.append(f"  ADDED   {aid}: {item['name']} (due {item['due']})")
+            continue
+
+        # Check fuzzy name match (same course + same normalized name → skip as duplicate)
+        if name_key in existing_by_name:
+            continue  # Already exists under a different ID
+
+        # New assignment — insert after last assignment of same course & type
+        insert_idx = len(existing)
+        for i, a in enumerate(existing):
+            if a["course"] == item["course"] and a.get("type") == item.get("type"):
+                insert_idx = i + 1
+        existing.insert(insert_idx, item)
+        existing_by_id[aid] = item
+        existing_by_name[name_key] = aid
+        changes.append(f"  ADDED   {aid}: {item['name']} (due {item['due']})")
 
     # Add past-due submitted items to autoCompleted
     ac_set = set(auto_completed)
@@ -1031,6 +1381,7 @@ def main():
     parser.add_argument("--no-push", action="store_true", help="Update config.js but don't push")
     parser.add_argument("--headless", action="store_true", help="Run Chrome in headless mode")
     parser.add_argument("--skip-canvas", action="store_true", help="Skip Canvas scraping")
+    parser.add_argument("--skip-websites", action="store_true", help="Skip course websites (eecs270.org, eecs370.github.io)")
     parser.add_argument("--skip-gradescope", action="store_true", help="Skip Gradescope scraping")
     parser.add_argument("--skip-ics", action="store_true", help="Skip ICS feed")
     args = parser.parse_args()
@@ -1087,9 +1438,31 @@ def main():
             _step_header(4, "Canvas planner")
             _info("Skipped (--skip-canvas)")
 
-        # 5. Gradescope
+        # 5. EECS 270 course website
+        if not args.skip_websites and driver:
+            _step_header(5, "EECS 270 website (eecs270.org)")
+            with Spinner("Scraping eecs270.org…"):
+                eecs270_items = scrape_eecs270_website(driver)
+            all_new.extend(eecs270_items)
+            _ok(f"{len(eecs270_items)} assignments from eecs270.org")
+        else:
+            _step_header(5, "EECS 270 website")
+            _info("Skipped (--skip-websites)")
+
+        # 6. EECS 370 course website
+        if not args.skip_websites and driver:
+            _step_header(6, "EECS 370 website (eecs370.github.io)")
+            with Spinner("Scraping eecs370.github.io…"):
+                eecs370_items = scrape_eecs370_website(driver)
+            all_new.extend(eecs370_items)
+            _ok(f"{len(eecs370_items)} assignments from eecs370.github.io")
+        else:
+            _step_header(6, "EECS 370 website")
+            _info("Skipped (--skip-websites)")
+
+        # 7. Gradescope
         if not args.skip_gradescope and driver:
-            _step_header(5, "Gradescope")
+            _step_header(7, "Gradescope")
             total_gs = 0
             for course_key, courses in GRADESCOPE_COURSES.items():
                 for course_info in courses:
@@ -1103,15 +1476,15 @@ def main():
                     _ok(f"{course_info['label']}: {len(gs_assignments)} assignments"
                         + (f" · {len(gs_submitted)} submitted" if gs_submitted else ""))
         else:
-            _step_header(5, "Gradescope")
+            _step_header(7, "Gradescope")
             _info("Skipped (--skip-gradescope)")
 
     finally:
         if driver:
             driver.quit()
 
-    # 6. Merge
-    _step_header(6, "Merging assignments")
+    # 8. Merge
+    _step_header(8, "Merging assignments")
     submitted_set = set(all_submitted)
     for item in all_new:
         if item["id"] in submitted_set:
@@ -1129,7 +1502,7 @@ def main():
             with Spinner("Updating scrape date…"):
                 write_config(raw_text, merged, updated_ac)
             if validate_config() and not args.no_push:
-                _step_header(9, "Pushing to GitHub")
+                _step_header(11, "Pushing to GitHub")
                 with Spinner("Pushing…"):
                     git_push()
         _print_done(0, 0, 0)
@@ -1148,14 +1521,14 @@ def main():
         _print_done(len(added), len(updated), len(autocmp))
         return
 
-    # 7. Write config.js
-    _step_header(7, "Writing config.js")
+    # 9. Write config.js
+    _step_header(9, "Writing config.js")
     with Spinner("Saving…"):
         write_config(raw_text, merged, updated_ac)
     _ok(f"Saved → {CONFIG_PATH}")
 
-    # 8. Validate
-    _step_header(8, "Validating config.js")
+    # 10. Validate
+    _step_header(10, "Validating config.js")
     with Spinner("Checking syntax…"):
         valid = validate_config()
     if not valid:
@@ -1163,8 +1536,8 @@ def main():
         return
     _ok(f"{len(merged)} assignments · syntax OK")
 
-    # 9. Push
-    _step_header(9, "Pushing to GitHub")
+    # 11. Push
+    _step_header(11, "Pushing to GitHub")
     if args.no_push:
         _info("Skipped (--no-push)")
     else:
