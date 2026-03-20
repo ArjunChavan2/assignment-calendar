@@ -356,7 +356,7 @@ const APP_CONFIG = {
       id: "270-q16",
       name: "Quiz 16 (Seq. Multiplication)",
       course: "eecs270",
-      due: "2026-04-01",
+      due: "2026-04-14",
       time: "11:59 PM",
       type: "quiz",
       points: "16",
@@ -366,7 +366,7 @@ const APP_CONFIG = {
       id: "270-q17",
       name: "Quiz 17 (Carry-Lookahead Adders)",
       course: "eecs270",
-      due: "2026-04-14",
+      due: "2026-04-16",
       time: "11:59 PM",
       type: "quiz",
       points: "22",
@@ -623,6 +623,16 @@ const APP_CONFIG = {
       hours: 1
     },
     {
+      id: "370-pl9",
+      name: "Pre-Lab 9",
+      course: "eecs370",
+      due: "2026-03-26",
+      time: "11:55 PM",
+      type: "prelab",
+      points: "5",
+      hours: 1
+    },
+    {
       id: "370-midterm",
       name: "Midterm Exam",
       course: "eecs370",
@@ -777,6 +787,16 @@ const APP_CONFIG = {
       name: "Quiz 9 (03/16)",
       course: "eecs442",
       due: "2026-03-16",
+      time: "11:39 AM",
+      type: "quiz",
+      points: "5",
+      hours: 0.5
+    },
+    {
+      id: "442-q10",
+      name: "Quiz 10 (03/18)",
+      course: "eecs442",
+      due: "2026-03-18",
       time: "11:39 AM",
       type: "quiz",
       points: "5",
@@ -1423,11 +1443,21 @@ const APP_CONFIG = {
       hours: 1
     },
     {
+      id: "tc-w11-peer-review",
+      name: "Week 11 - Written Report Peer Review Worksheet",
+      course: "tc300",
+      due: "2026-03-19",
+      time: "11:59 PM",
+      type: "assignment",
+      points: "2",
+      hours: 1
+    },
+    {
       id: "tc-report-draft",
       name: "Written Report Draft",
       course: "tc300",
-      due: "2026-03-19",
-      time: "11:30 AM",
+      due: "2026-03-20",
+      time: "11:59 PM",
       type: "assignment",
       points: "30",
       hours: 8
@@ -1446,7 +1476,7 @@ const APP_CONFIG = {
       id: "tc-final-report",
       name: "Final Written Report",
       course: "tc300",
-      due: "2026-03-27",
+      due: "2026-04-03",
       time: "11:59 PM",
       type: "assignment",
       points: "75",
