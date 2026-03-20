@@ -997,6 +997,17 @@ function getMergedAssignments() {
   let merged = assignments.filter(a => !deletions[a.id]);
   merged = merged.map(a => edits[a.id] ? { ...a, ...edits[a.id] } : a);
   merged.push(...Object.values(additions));
+
+  // Auto-hide assignments whose due date is more than 7 days ago
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - 7);
+  merged = merged.filter(a => {
+    const due = new Date(a.due + 'T23:59:59');
+    return due >= cutoff;
+  });
+
   return merged;
 }
 
