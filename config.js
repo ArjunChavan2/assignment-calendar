@@ -203,6 +203,16 @@ const APP_CONFIG = {
       specUrl: "https://umich.instructure.com/courses/815882/pages/project-7-sequential-calculator"
     },
     {
+      id: "270-p7-cp",
+      name: "Project 7 Checkpoint",
+      course: "eecs270",
+      due: "2026-04-10",
+      time: "11:59 PM",
+      type: "project",
+      points: "-",
+      hours: 3
+    },
+    {
       id: "270-p3",
       name: "Project 3 Autograde",
       course: "eecs270",
@@ -334,9 +344,9 @@ const APP_CONFIG = {
     },
     {
       id: "270-q14",
-      name: "Quiz 14 (RTL Design)",
+      name: "Quiz 14 (Sequential Timing Analysis)",
       course: "eecs270",
-      due: "2026-03-27",
+      due: "2026-03-24",
       time: "11:59 PM",
       type: "quiz",
       points: "20",
@@ -344,9 +354,9 @@ const APP_CONFIG = {
     },
     {
       id: "270-q15",
-      name: "Quiz 15 (Seq. Timing Analysis)",
+      name: "Quiz 15 (Sequential Multiplication)",
       course: "eecs270",
-      due: "2026-04-03",
+      due: "2026-03-31",
       time: "11:59 PM",
       type: "quiz",
       points: "20",
@@ -354,9 +364,9 @@ const APP_CONFIG = {
     },
     {
       id: "270-q16",
-      name: "Quiz 16 (Seq. Multiplication)",
+      name: "Quiz 16 (Two-Level Logic Min.)",
       course: "eecs270",
-      due: "2026-04-14",
+      due: "2026-04-02",
       time: "11:59 PM",
       type: "quiz",
       points: "16",
@@ -364,9 +374,9 @@ const APP_CONFIG = {
     },
     {
       id: "270-q17",
-      name: "Quiz 17 (Carry-Lookahead Adders)",
+      name: "Quiz 17 (Designing Fast Adders)",
       course: "eecs270",
-      due: "2026-04-16",
+      due: "2026-04-14",
       time: "11:59 PM",
       type: "quiz",
       points: "22",
@@ -374,7 +384,7 @@ const APP_CONFIG = {
     },
     {
       id: "270-q18",
-      name: "Quiz 18 (State Minimization)",
+      name: "Quiz 18 (State Assignment & Min.)",
       course: "eecs270",
       due: "2026-04-16",
       time: "11:59 PM",
@@ -406,8 +416,8 @@ const APP_CONFIG = {
       id: "270-exam2",
       name: "Exam 2",
       course: "eecs270",
-      due: "2026-03-12",
-      time: "5:02 PM",
+      due: "2026-03-25",
+      time: "6:00 PM",
       type: "exam",
       points: "100",
       hours: 12
@@ -417,7 +427,7 @@ const APP_CONFIG = {
       name: "Final Exam",
       course: "eecs270",
       due: "2026-04-27",
-      time: null,
+      time: "4:00 PM",
       type: "exam",
       points: "100",
       hours: 15
@@ -1601,7 +1611,7 @@ const APP_CONFIG = {
     "tc-w10-presentation",
     // Auto-added 2026-03-20: past assignments (due before 2026-03-18) not previously marked
     "270-p3",
-    "270-exam2",
+    // "270-exam2" removed — date was wrong (was Mar 12, actually Mar 25); un-completing so it shows on calendar
     "370-lectures-at-12pm-and",
     "442-q1",
     "442-q2",
