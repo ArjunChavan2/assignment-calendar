@@ -334,7 +334,7 @@ const APP_CONFIG = {
     },
     {
       id: "270-q14",
-      name: "Quiz 14 (Sequential Timing Analysis)",
+      name: "Quiz 14 (RTL Design)",
       course: "eecs270",
       due: "2026-03-27",
       time: "11:59 PM",
@@ -344,7 +344,7 @@ const APP_CONFIG = {
     },
     {
       id: "270-q15",
-      name: "Quiz 15 (Sequential Multiplication)",
+      name: "Quiz 15 (Seq. Timing Analysis)",
       course: "eecs270",
       due: "2026-04-03",
       time: "11:59 PM",
@@ -354,7 +354,7 @@ const APP_CONFIG = {
     },
     {
       id: "270-q16",
-      name: "Quiz 16 (Carry-Lookahead Adders)",
+      name: "Quiz 16 (Seq. Multiplication)",
       course: "eecs270",
       due: "2026-04-14",
       time: "11:59 PM",
@@ -364,7 +364,7 @@ const APP_CONFIG = {
     },
     {
       id: "270-q17",
-      name: "Quiz 17 (State Minimization)",
+      name: "Quiz 17 (Carry-Lookahead Adders)",
       course: "eecs270",
       due: "2026-04-16",
       time: "11:59 PM",
@@ -502,7 +502,7 @@ const APP_CONFIG = {
       id: "370-p3",
       name: "Project 3",
       course: "eecs370",
-      due: "2026-04-02",
+      due: "2026-03-26",
       time: "11:55 PM",
       type: "project",
       points: "95",
@@ -1260,16 +1260,6 @@ const APP_CONFIG = {
       time: "4:00 PM",
       type: "lecture",
       points: "20",
-      hours: 0.5
-    },
-    {
-      id: "s250-l15pw",
-      name: "Lecture 15 PW",
-      course: "stats250",
-      due: "2026-03-23",
-      time: "2:30 PM",
-      type: "lecture",
-      points: "10",
       hours: 0.5
     },
     {
