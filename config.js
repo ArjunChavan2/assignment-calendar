@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 21, 2026",
+  scrapeDate: "March 22, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -346,7 +346,7 @@ const APP_CONFIG = {
       id: "270-q14",
       name: "Quiz 14 (Sequential Timing Analysis)",
       course: "eecs270",
-      due: "2026-03-24",
+      due: "2026-03-27",
       time: "11:59 PM",
       type: "quiz",
       points: "20",
@@ -356,7 +356,7 @@ const APP_CONFIG = {
       id: "270-q15",
       name: "Quiz 15 (Sequential Multiplication)",
       course: "eecs270",
-      due: "2026-03-31",
+      due: "2026-04-03",
       time: "11:59 PM",
       type: "quiz",
       points: "20",
@@ -364,9 +364,9 @@ const APP_CONFIG = {
     },
     {
       id: "270-q16",
-      name: "Quiz 16 (Two-Level Logic Min.)",
+      name: "Quiz 16 (Carry-Lookahead Adders)",
       course: "eecs270",
-      due: "2026-04-02",
+      due: "2026-04-14",
       time: "11:59 PM",
       type: "quiz",
       points: "16",
@@ -374,9 +374,9 @@ const APP_CONFIG = {
     },
     {
       id: "270-q17",
-      name: "Quiz 17 (Designing Fast Adders)",
+      name: "Quiz 17 (State Minimization)",
       course: "eecs270",
-      due: "2026-04-14",
+      due: "2026-04-16",
       time: "11:59 PM",
       type: "quiz",
       points: "22",
@@ -512,7 +512,7 @@ const APP_CONFIG = {
       id: "370-p3",
       name: "Project 3",
       course: "eecs370",
-      due: "2026-03-26",
+      due: "2026-04-02",
       time: "11:55 PM",
       type: "project",
       points: "95",
@@ -1273,6 +1273,16 @@ const APP_CONFIG = {
       hours: 0.5
     },
     {
+      id: "s250-l15pw",
+      name: "Lecture 15 PW",
+      course: "stats250",
+      due: "2026-03-23",
+      time: "2:30 PM",
+      type: "lecture",
+      points: "10",
+      hours: 0.5
+    },
+    {
       id: "tc-survey",
       name: "Pre-Course Survey",
       course: "tc300",
@@ -1625,6 +1635,13 @@ const APP_CONFIG = {
     "s250-l11pw",
     "s250-l14gw",
     // Auto-added 2026-03-21: past assignments (due before 2026-03-19) not previously marked
-    "442-q10"
+    "442-q10",
+    // Auto-added 2026-03-22: past assignments (due before 2026-03-20) not previously marked
+    "270-q13",
+    "370-p2l",
+    "370-p2r",
+    "tc-w11-peer-review",
+    "s250-exam2",
+    "s250-l14gw"
   ]
 };
