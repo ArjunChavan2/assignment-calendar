@@ -1290,38 +1290,66 @@ function generateStudyPlan(assignment, today) {
       dayIndex++;
     }
   } else {
-    // Project study plan: phase-based breakdown
-    // 1-2 days reading/planning, 4-5 days coding (3 submissions/day limit), rest for testing
-    const phases = [
-      { pct: 0.08, label: 'Read spec thoroughly & understand requirements' },
-      { pct: 0.08, label: 'Plan approach & outline design' },
-      { pct: 0.38, label: 'Implement core functionality (3 submissions/day)' },
-      { pct: 0.18, label: 'Implement edge cases & remaining features' },
-      { pct: 0.18, label: 'Test, debug & fix issues' },
-      { pct: 0.10, label: 'Final review, clean up & submit' },
-    ];
-
-    // Minimum 8 days: 2 reading/planning + 4-5 coding + 1-2 testing/submit
+    // Project work plan: 1-2 days spec review, rest is coding
+    // Minimum 8 days: 1-2 reading + heavy coding + 1 day final submit
     const idealDays = Math.min(daysLeft, Math.max(8, Math.ceil(totalHours / 1.5)));
     const startOffset = daysLeft - idealDays;
 
+    // Fixed 1-2 days for spec review (2 if ≥10 days, else 1)
+    const reviewDays = idealDays >= 10 ? 2 : 1;
+    const codingDays = idealDays - reviewDays - 1; // reserve 1 day for final cleanup
+    const submitDays = 1;
+
+    // Hours allocation: ~10% review, ~80% coding, ~10% final cleanup
+    const reviewHours = +(totalHours * 0.10 / reviewDays).toFixed(1);
+    const codingHoursTotal = totalHours * 0.80;
+    const submitHours = +(totalHours * 0.10).toFixed(1);
+
+    // Coding sub-phases within the coding days
+    const codingPhases = [
+      { pct: 0.50, label: 'Implement core functionality (3 submissions/day)' },
+      { pct: 0.25, label: 'Implement edge cases & remaining features' },
+      { pct: 0.25, label: 'Test, debug & fix issues' },
+    ];
+
     let dayIndex = 0;
-    for (const phase of phases) {
-      const phaseDays = Math.max(1, Math.round(idealDays * phase.pct));
-      const phaseHours = +(totalHours * phase.pct / phaseDays).toFixed(1);
-      for (let d = 0; d < phaseDays && dayIndex < idealDays; d++, dayIndex++) {
+
+    // Review days
+    for (let d = 0; d < reviewDays && dayIndex < idealDays; d++, dayIndex++) {
+      const date = addDays(todayDate, startOffset + dayIndex);
+      const isToday = dateStr(date) === today;
+      const isPast = date < todayDate;
+      const label = d === 0 ? 'Read spec & understand requirements' : 'Plan approach & outline design';
+      steps.push({ date: fmtDay(date), task: label, hours: reviewHours, isToday, isPast });
+    }
+
+    // Coding days — distribute across sub-phases
+    let codingDayIndex = 0;
+    for (const phase of codingPhases) {
+      const phaseDays = Math.max(1, Math.round(codingDays * phase.pct));
+      const phaseHours = +(codingHoursTotal * phase.pct / phaseDays).toFixed(1);
+      for (let d = 0; d < phaseDays && codingDayIndex < codingDays && dayIndex < idealDays; d++, codingDayIndex++, dayIndex++) {
         const date = addDays(todayDate, startOffset + dayIndex);
         const isToday = dateStr(date) === today;
         const isPast = date < todayDate;
         steps.push({ date: fmtDay(date), task: phase.label, hours: phaseHours, isToday, isPast });
       }
     }
-    while (dayIndex < idealDays) {
+    // Fill any remaining coding days
+    while (codingDayIndex < codingDays && dayIndex < idealDays) {
       const date = addDays(todayDate, startOffset + dayIndex);
       const isToday = dateStr(date) === today;
       const isPast = date < todayDate;
-      steps.push({ date: fmtDay(date), task: 'Buffer / catch-up time', hours: 1, isToday, isPast });
-      dayIndex++;
+      steps.push({ date: fmtDay(date), task: 'Continue coding & testing', hours: +(codingHoursTotal / codingDays).toFixed(1), isToday, isPast });
+      codingDayIndex++; dayIndex++;
+    }
+
+    // Final cleanup/submit day
+    for (let d = 0; d < submitDays && dayIndex < idealDays; d++, dayIndex++) {
+      const date = addDays(todayDate, startOffset + dayIndex);
+      const isToday = dateStr(date) === today;
+      const isPast = date < todayDate;
+      steps.push({ date: fmtDay(date), task: 'Final review, clean up & submit', hours: submitHours, isToday, isPast });
     }
   }
 

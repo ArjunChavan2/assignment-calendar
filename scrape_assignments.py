@@ -128,6 +128,14 @@ ICS_URL = (
 )
 CHROME_PROFILE_DIR = Path.home() / ".assignment-scraper-profile"
 
+# Canvas course IDs — maps config course key → Canvas course ID
+# These are used for the per-course assignments API
+# If a course ID is unknown, the scraper will try to discover it from enrolled courses
+CANVAS_COURSE_IDS = {
+    "eecs270": "815882",
+    # Others will be auto-discovered from Canvas enrollment
+}
+
 GRADESCOPE_COURSES = {
     "stats250": [
         {"url_id": "1198964", "label": "STATS 250 EP/Labs/CS/Exams"},
@@ -331,31 +339,12 @@ def write_config(raw_text, assignments, auto_completed):
 
 # ── Selenium setup ─────────────────────────────────────────────────────
 
-CHROME_DEBUG_PORT = 9222
-
-
 def make_driver(headless=False):
     """
-    Connect to an already-running Chrome (via remote debugging) if available,
-    so existing sessions and cookies are reused with no login required.
-    Falls back to launching a new Chrome with a persistent profile.
+    Launch Chrome with a persistent profile so logins are remembered
+    between runs. First run requires signing in; after that cookies persist.
     """
-    # Try attaching to the user's existing Chrome first
-    try:
-        opts = ChromeOptions()
-        opts.debugger_address = f"127.0.0.1:{CHROME_DEBUG_PORT}"
-        driver = webdriver.Chrome(options=opts)
-        driver.implicitly_wait(5)
-        _ok(f"Attached to existing Chrome on port {CHROME_DEBUG_PORT} — using your saved sessions")
-        return driver
-    except Exception as e:
-        _warn(f"Could not attach to existing Chrome (port {CHROME_DEBUG_PORT}): {e}")
-        _warn("Falling back to a fresh Chrome profile — you may need to log in")
-        _info(f"To fix: quit Chrome, then run: chrome")
-        _info(f"Then verify with: curl http://localhost:{CHROME_DEBUG_PORT}/json/version")
-
-    # Fall back: launch a new Chrome with a persistent profile
-    _info("Launching new Chrome instance with saved profile…")
+    _info("Launching Chrome with saved profile…")
     opts = ChromeOptions()
     opts.add_argument(f"--user-data-dir={CHROME_PROFILE_DIR}")
     opts.add_argument("--no-first-run")
@@ -364,6 +353,7 @@ def make_driver(headless=False):
         opts.add_argument("--headless=new")
     driver = webdriver.Chrome(options=opts)
     driver.implicitly_wait(5)
+    _ok("Chrome ready")
     return driver
 
 
@@ -531,8 +521,8 @@ def parse_canvas_items(items):
         if not course_key:
             continue  # skip courses we don't track
 
-        # Skip STATS 250 from Canvas (use Gradescope instead)
-        if course_key == "stats250":
+        # Skip courses that use Gradescope instead of Canvas
+        if course_key in ("stats250", "eecs442"):
             continue
 
         name = plannable.get("title", "Unknown")
@@ -566,6 +556,120 @@ def parse_canvas_items(items):
             "hours": guess_hours(atype),
         })
     return assignments
+
+
+def discover_canvas_course_ids(driver):
+    """Fetch enrolled Canvas courses and map them to our config keys."""
+    try:
+        courses = driver.execute_script("""
+            const all = [];
+            let url = "/api/v1/courses?enrollment_state=active&per_page=100";
+            while (url) {
+                const resp = await fetch(url);
+                if (!resp.ok) break;
+                const data = await resp.json();
+                all.push(...data);
+                // Check for pagination
+                const link = resp.headers.get("Link") || "";
+                const next = link.match(/<([^>]+)>;\s*rel="next"/);
+                url = next ? next[1] : null;
+            }
+            return all;
+        """)
+    except JavascriptException as e:
+        _warn(f"Could not fetch Canvas courses: {e}")
+        return {}
+
+    discovered = dict(CANVAS_COURSE_IDS)  # start with known IDs
+    for course in (courses or []):
+        cname = (course.get("name") or "").lower()
+        cid = str(course.get("id", ""))
+        for pattern, key in CANVAS_COURSE_MAP.items():
+            if pattern in cname and key not in discovered:
+                discovered[key] = cid
+                _info(f"Discovered Canvas course: {key} → {cid}")
+    return discovered
+
+
+def scrape_canvas_course_assignments(driver, course_key, course_id):
+    """Fetch all assignments for a specific Canvas course via the API."""
+    try:
+        items = driver.execute_script("""
+            const courseId = arguments[0];
+            const all = [];
+            let url = `/api/v1/courses/${courseId}/assignments?per_page=100&order_by=due_at`;
+            while (url) {
+                const resp = await fetch(url);
+                if (!resp.ok) break;
+                const data = await resp.json();
+                all.push(...data);
+                const link = resp.headers.get("Link") || "";
+                const next = link.match(/<([^>]+)>;\s*rel="next"/);
+                url = next ? next[1] : null;
+            }
+            return all;
+        """, course_id)
+    except JavascriptException as e:
+        _warn(f"Canvas assignments API error for {course_key}: {e}")
+        return []
+
+    assignments = []
+    for item in (items or []):
+        name = item.get("name", "")
+        due_at = item.get("due_at")
+        if not name or not due_at:
+            continue
+
+        # Skip unpublished assignments
+        if not item.get("published", True):
+            continue
+
+        try:
+            dt = datetime.fromisoformat(due_at.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+
+        due_date = format_date_eastern(dt)
+        due_time = format_time_eastern(dt)
+        atype = guess_type(name, item.get("submission_types", [""])[0] if item.get("submission_types") else "")
+        aid = generate_canvas_id(course_key, name, {"plannable": item})
+        points = item.get("points_possible")
+
+        assignments.append({
+            "id": aid,
+            "name": name,
+            "course": course_key,
+            "due": due_date,
+            "time": due_time,
+            "type": atype,
+            "points": str(points) if points is not None else "—",
+            "hours": guess_hours(atype),
+            "specUrl": item.get("html_url", ""),
+        })
+
+    return assignments
+
+
+def scrape_all_canvas_courses(driver):
+    """Scrape assignments from all tracked Canvas courses."""
+    # First, discover course IDs we don't already know
+    course_ids = discover_canvas_course_ids(driver)
+
+    all_assignments = []
+    # Only scrape these courses from Canvas; others use Gradescope
+    canvas_courses = ("eecs270", "eecs370", "tc300")
+    for course_key in canvas_courses:
+        cid = course_ids.get(course_key)
+        if not cid:
+            _warn(f"No Canvas course ID for {course_key}, skipping")
+            continue
+
+        _info(f"Fetching {course_key} (Canvas ID {cid})…")
+        items = scrape_canvas_course_assignments(driver, course_key, cid)
+        _info(f"  → {len(items)} assignments")
+        all_assignments.extend(items)
+
+    return all_assignments
 
 
 def generate_canvas_id(course_key, name, item):
@@ -698,105 +802,209 @@ def scrape_eecs270_website(driver):
     time.sleep(3)
 
     try:
-        data = driver.execute_script("""
+        data = driver.execute_script(r"""
             const results = [];
+            const seen = new Set();  // prevent duplicates within this scrape
 
-            // 1. Project cards — look for elements with "Due" dates
-            //    Cards have headings like "Project N: Name" and a red badge with "Due: Date"
-            const allText = document.body.innerText;
+            function addResult(item) {
+                const key = item.id + '|' + item.date;
+                if (seen.has(key)) return;
+                seen.add(key);
+                results.push(item);
+            }
 
-            // 2. Parse schedule table for quizzes, labs, exams, and project deadlines
+            // Date regex: matches "Mon Jan 13", "Thu Mar 25", "January 20, 2026",
+            // "Mar 11", "1/13", etc. — broad enough to catch any date-like cell
+            const dateRe = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\w*[,.\s]+(\w{3,9}\.?\s+\d{1,2})/i;
+            const shortDateRe = /^(\w{3,9}\.?\s+\d{1,2})/i;
+            const numDateRe = /^(\d{1,2})\/(\d{1,2})/;
+
+            function extractDate(text) {
+                text = (text || '').trim();
+                // "Thu Jan 29" / "Monday March 25"
+                let m = text.match(dateRe);
+                if (m) return m[2].replace('.', '');
+                // "Jan 29" / "March 25"
+                m = text.match(shortDateRe);
+                if (m && /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(m[1])) return m[1].replace('.', '');
+                return null;
+            }
+
+            // ── 1. Parse ALL tables on the page ──
             const tables = document.querySelectorAll('table');
             for (const table of tables) {
                 const rows = table.querySelectorAll('tr');
                 let currentDate = '';
-                for (const row of rows) {
-                    const cells = row.querySelectorAll('td, th');
-                    if (cells.length < 2) continue;
 
-                    // First cell is often the date
-                    const dateCell = cells[0]?.textContent?.trim();
-                    if (dateCell && /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|\\d)/.test(dateCell)) {
-                        currentDate = dateCell;
+                for (const row of rows) {
+                    const cells = Array.from(row.querySelectorAll('td, th'));
+                    if (cells.length < 1) continue;
+
+                    // Try to extract a date from ANY cell in the row
+                    for (const cell of cells) {
+                        const d = extractDate(cell.textContent.trim());
+                        if (d) { currentDate = d; break; }
                     }
 
-                    // Scan all cells for assignment names
-                    for (const cell of cells) {
-                        const text = cell.textContent.trim();
+                    // Now scan ALL cell text for assignment keywords
+                    const rowText = cells.map(c => c.textContent.trim()).join(' | ');
 
-                        // Quiz N
-                        const qm = text.match(/Quiz\\s*(\\d+)/i);
-                        if (qm) {
-                            results.push({
-                                name: `Quiz ${qm[1]}`,
-                                type: 'quiz',
+                    // Quiz N (with optional topic in parens)
+                    const quizMatches = rowText.matchAll(/Quiz\s*(\d+)(?:\s*[-:(]\s*([^)|]+))?/gi);
+                    for (const qm of quizMatches) {
+                        const num = qm[1];
+                        const topic = qm[2] ? qm[2].trim() : '';
+                        addResult({
+                            name: topic ? `Quiz ${num} (${topic})` : `Quiz ${num}`,
+                            type: 'quiz',
+                            date: currentDate,
+                            id: `270-q${num}`
+                        });
+                    }
+
+                    // Exam N (but not "conflict" or "review")
+                    const examMatches = rowText.matchAll(/Exam\s*(\d)\b/gi);
+                    for (const em of examMatches) {
+                        if (/conflict|review/i.test(rowText.substring(Math.max(0, em.index - 10), em.index + em[0].length + 20))) continue;
+                        const timeMatch = rowText.match(/(\d{1,2}[:-]\d{2}\s*(pm|am|PM|AM))/);
+                        addResult({
+                            name: `Exam ${em[1]}`,
+                            type: 'exam',
+                            date: currentDate,
+                            time: timeMatch ? timeMatch[1] : null,
+                            id: `270-exam${em[1]}`
+                        });
+                    }
+
+                    // Final Exam
+                    if (/Final\s*Exam/i.test(rowText) && !/conflict/i.test(rowText)) {
+                        const timeMatch = rowText.match(/(\d{1,2}[:-]\d{2}\s*(pm|am|PM|AM))/);
+                        addResult({
+                            name: 'Final Exam',
+                            type: 'exam',
+                            date: currentDate || rowText,
+                            time: timeMatch ? timeMatch[1] : null,
+                            id: '270-final'
+                        });
+                    }
+
+                    // Project deadlines mentioned in schedule rows
+                    // Matches: "P5 due", "Project 5 due", "P5", "Project 5 Signoff"
+                    const projInRow = rowText.matchAll(/(?:Project|P)\s*(\d+)\s*([A-Za-z]*)/gi);
+                    for (const pm of projInRow) {
+                        const num = pm[1];
+                        const suffix = (pm[2] || '').trim().toLowerCase();
+                        // Skip if it's just a lecture topic mentioning a project
+                        if (/lecture|topic|chapter|reading/i.test(rowText) && !/due|deadline|signoff|autograde/i.test(rowText)) continue;
+                        if (/due|deadline|signoff|autograde|checkpoint/i.test(rowText) || /due|deadline/i.test(suffix)) {
+                            let name = `Project ${num}`;
+                            let idSuffix = '';
+                            if (/signoff/i.test(suffix) || /signoff/i.test(rowText)) {
+                                name += ' Signoff';
+                                idSuffix = '-signoff';
+                            } else if (/autograde/i.test(suffix) || /autograde/i.test(rowText)) {
+                                name += ' Autograde';
+                                idSuffix = '-auto';
+                            } else if (/checkpoint/i.test(suffix) || /checkpoint/i.test(rowText)) {
+                                name += ' Checkpoint';
+                                idSuffix = '-cp';
+                            }
+                            addResult({
+                                name: name,
+                                type: 'project',
                                 date: currentDate,
-                                id: `270-q${qm[1]}`
+                                id: `270-p${num}${idSuffix}`
                             });
                         }
+                    }
 
-                        // Exam
-                        if (/Exam\\s*\\d/i.test(text) && !/conflict/i.test(text)) {
-                            const em = text.match(/Exam\\s*(\\d)/i);
-                            if (em) {
-                                // Extract time if present
-                                const timeMatch = text.match(/(\\d{1,2}[:-]\\d{2}\\s*(pm|am|PM|AM))/);
-                                results.push({
-                                    name: `Exam ${em[1]}`,
-                                    type: 'exam',
-                                    date: currentDate,
-                                    time: timeMatch ? timeMatch[1] : null,
-                                    id: `270-exam${em[1]}`
-                                });
-                            }
+                    // Lab N
+                    const labMatches = rowText.matchAll(/Lab\s*(\d+)/gi);
+                    for (const lm of labMatches) {
+                        // Skip if it's a column header or just "Lab" section label
+                        if (/due|deadline|submit/i.test(rowText)) {
+                            addResult({
+                                name: `Lab ${lm[1]}`,
+                                type: 'lab',
+                                date: currentDate,
+                                id: `270-lab${lm[1]}`
+                            });
                         }
+                    }
 
-                        // Final Exam
-                        if (/Final\\s*Exam/i.test(text)) {
-                            const timeMatch = text.match(/(\\d{1,2}[:-]\\d{2}\\s*(pm|am|PM|AM))/);
-                            results.push({
-                                name: 'Final Exam',
-                                type: 'exam',
-                                date: currentDate || text,
-                                time: timeMatch ? timeMatch[1] : null,
-                                id: '270-final'
+                    // Homework / HW N
+                    const hwMatches = rowText.matchAll(/(?:Homework|HW)\s*(\d+)/gi);
+                    for (const hm of hwMatches) {
+                        if (/due|deadline|submit/i.test(rowText)) {
+                            addResult({
+                                name: `Homework ${hm[1]}`,
+                                type: 'assignment',
+                                date: currentDate,
+                                id: `270-hw${hm[1]}`
                             });
                         }
                     }
                 }
             }
 
-            // 3. Project cards with due dates
-            //    Look for headings + due dates in cards/sections
-            const headings = document.querySelectorAll('h2, h3, h4, [class*="card"] h2, [class*="card"] h3');
+            // ── 2. Project cards with due dates ──
+            const headings = document.querySelectorAll('h1, h2, h3, h4, h5, [class*="card"] h2, [class*="card"] h3, [class*="card"] h4');
             headings.forEach(h => {
                 const text = h.textContent.trim();
-                const pm = text.match(/Project\\s*(\\d+)/i);
-                if (pm) {
-                    // Look for a "Due" date near this heading
-                    let dueText = '';
-                    let el = h.nextElementSibling || h.parentElement;
-                    // Search siblings and parent for due date text
-                    for (let i = 0; i < 5 && el; i++) {
-                        const t = el.textContent || '';
-                        const dm = t.match(/Due[:\\s]+(\\w+ \\d{1,2}(?:,?\\s*\\d{4})?)/i);
-                        if (dm) { dueText = dm[1]; break; }
-                        el = el.nextElementSibling;
+                const pm = text.match(/Project\s*(\d+)/i);
+                if (!pm) return;
+                const num = pm[1];
+
+                // Search nearby elements and parent for a "Due" date
+                let dueText = '';
+                // Check siblings
+                let el = h.nextElementSibling;
+                for (let i = 0; i < 8 && el; i++) {
+                    const t = el.textContent || '';
+                    const dm = t.match(/Due[:\s]+([\w\s,]+\d{1,2}(?:[,\s]*\d{4})?)/i);
+                    if (dm) { dueText = dm[1].trim(); break; }
+                    el = el.nextElementSibling;
+                }
+                // Check parent container
+                if (!dueText) {
+                    const parent = h.closest('div, section, article, li');
+                    if (parent) {
+                        const dm = parent.textContent.match(/Due[:\s]+([\w\s,]+\d{1,2}(?:[,\s]*\d{4})?)/i);
+                        if (dm) dueText = dm[1].trim();
                     }
-                    // Also check parent container
-                    if (!dueText) {
-                        const parent = h.closest('div, section, article');
-                        if (parent) {
-                            const dm = parent.textContent.match(/Due[:\\s]+(\\w+ \\d{1,2}(?:,?\\s*\\d{4})?)/i);
-                            if (dm) dueText = dm[1];
-                        }
-                    }
-                    results.push({
+                }
+                // Check the heading text itself for inline dates
+                if (!dueText) {
+                    const dm = text.match(/Due[:\s]+([\w\s,]+\d{1,2})/i);
+                    if (dm) dueText = dm[1].trim();
+                }
+
+                if (dueText) {
+                    addResult({
                         name: text,
                         type: 'project',
                         date: dueText,
-                        id: `270-p${pm[1]}`
+                        id: `270-p${num}`
                     });
+                }
+            });
+
+            // ── 3. Scan all links and bold/strong text for deadlines ──
+            const links = document.querySelectorAll('a, strong, b, em');
+            links.forEach(el => {
+                const text = el.textContent.trim();
+                // "Quiz 15 due Jan 29" or similar inline mentions
+                const qm = text.match(/Quiz\s*(\d+)/i);
+                if (qm) {
+                    const dateM = text.match(/(?:due|by)?\s*(\w{3,9}\.?\s+\d{1,2})/i);
+                    if (dateM) {
+                        addResult({
+                            name: `Quiz ${qm[1]}`,
+                            type: 'quiz',
+                            date: dateM[1],
+                            id: `270-q${qm[1]}`
+                        });
+                    }
                 }
             });
 
@@ -1426,16 +1634,22 @@ def main():
             _step_header(3, "Chrome")
             _info("Skipped (canvas + gradescope both skipped)")
 
-        # 4. Canvas planner API
+        # 4. Canvas course assignments + planner API
         if not args.skip_canvas and driver:
-            _step_header(4, "Canvas planner API")
+            _step_header(4, "Canvas course assignments")
+            with Spinner("Fetching per-course assignments…"):
+                course_assignments = scrape_all_canvas_courses(driver)
+            all_new.extend(course_assignments)
+            _ok(f"{len(course_assignments)} assignments from Canvas courses")
+
+            # Also fetch planner items (catches announcements/pages the assignments API misses)
             with Spinner("Fetching planner items…"):
                 canvas_items = scrape_canvas_planner(driver)
             parsed = parse_canvas_items(canvas_items)
             all_new.extend(parsed)
-            _ok(f"{len(canvas_items)} planner items → {len(parsed)} relevant assignments")
+            _ok(f"{len(canvas_items)} planner items → {len(parsed)} additional")
         else:
-            _step_header(4, "Canvas planner")
+            _step_header(4, "Canvas")
             _info("Skipped (--skip-canvas)")
 
         # 5. EECS 270 course website

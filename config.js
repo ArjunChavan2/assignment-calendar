@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 22, 2026",
+  scrapeDate: "March 27, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -713,6 +713,16 @@ const APP_CONFIG = {
       hours: 10
     },
     {
+      id: "442-hw5",
+      name: "HW5: Panorama",
+      course: "eecs442",
+      due: "2026-04-09",
+      time: "5:29 PM",
+      type: "homework",
+      points: "120",
+      hours: 10
+    },
+    {
       id: "442-q1",
       name: "Quiz 1 (02/02)",
       course: "eecs442",
@@ -808,6 +818,16 @@ const APP_CONFIG = {
       course: "eecs442",
       due: "2026-03-18",
       time: "11:39 AM",
+      type: "quiz",
+      points: "5",
+      hours: 0.5
+    },
+    {
+      id: "442-q11",
+      name: "Quiz 11 (03/23)",
+      course: "eecs442",
+      due: "2026-03-23",
+      time: "11:51 AM",
       type: "quiz",
       points: "5",
       hours: 0.5
@@ -1283,6 +1303,26 @@ const APP_CONFIG = {
       hours: 0.5
     },
     {
+      id: "s250-l15gw",
+      name: "Lecture 15 GW",
+      course: "stats250",
+      due: "2026-03-23",
+      time: "4:00 PM",
+      type: "lecture",
+      points: "20",
+      hours: 0.5
+    },
+    {
+      id: "s250-l16pw",
+      name: "Lecture 16 PW",
+      course: "stats250",
+      due: "2026-03-25",
+      time: "2:30 PM",
+      type: "lecture",
+      points: "10",
+      hours: 0.5
+    },
+    {
       id: "tc-survey",
       name: "Pre-Course Survey",
       course: "tc300",
@@ -1521,6 +1561,56 @@ const APP_CONFIG = {
       type: "assignment",
       points: "EC",
       hours: 2
+    },
+    {
+      id: "tc-w12",
+      name: "Week 12 - Assertion Evidence Slides",
+      course: "tc300",
+      due: "2026-03-26",
+      time: "11:59 PM",
+      type: "assignment",
+      points: "2",
+      hours: 1
+    },
+    {
+      id: "s250-l16gw",
+      name: "Lecture 16 GW",
+      course: "stats250",
+      due: "2026-03-25",
+      time: "4:00 PM",
+      type: "lecture",
+      points: "20",
+      hours: 0.5
+    },
+    {
+      id: "s250-l17pw",
+      name: "Lecture 17 PW",
+      course: "stats250",
+      due: "2026-03-30",
+      time: "2:30 PM",
+      type: "lecture",
+      points: "10",
+      hours: 0.5
+    },
+    {
+      id: "370-pl10",
+      name: "Pre-Lab 10",
+      course: "eecs370",
+      due: "2026-04-02",
+      time: "11:55 PM",
+      type: "prelab",
+      points: "5",
+      hours: 1
+    },
+    {
+      id: "442-q12",
+      name: "Quiz 12 (03/25)",
+      course: "eecs442",
+      due: "2026-03-25",
+      time: "11:51 AM",
+      type: "quiz",
+      points: "5",
+      hours: 0.5
     }
   ],
 
@@ -1642,6 +1732,15 @@ const APP_CONFIG = {
     "370-p2r",
     "tc-w11-peer-review",
     "s250-exam2",
-    "s250-l14gw"
+    "s250-l14gw",
+    // Auto-added 2026-03-23: past assignments (due before 2026-03-21) not previously marked
+    "tc-report-draft",
+    "tc-oral-proposal",
+    // Auto-added 2026-03-27: past assignments (due before 2026-03-25) not previously marked
+    "s250-l15pw",
+    "s250-l15gw",
+    "s250-cs2",
+    "442-q11",
+    "370-hw3"
   ]
 };
