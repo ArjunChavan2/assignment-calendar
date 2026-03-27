@@ -1374,9 +1374,22 @@ function generateStudyPlan(assignment, today) {
 }
 
 // ========== TOOLTIP ==========
+let tooltipShowTimer = null;
+
 function showTooltip(e, assignment) {
   e.stopPropagation();
-  cancelHideTooltip(); // Cancel any pending hide
+  cancelHideTooltip();
+  // Cancel any pending show
+  if (tooltipShowTimer) { clearTimeout(tooltipShowTimer); tooltipShowTimer = null; }
+  // Capture the event target now (it won't be available after the delay)
+  const chip = e.currentTarget || e.target;
+  tooltipShowTimer = setTimeout(() => {
+    tooltipShowTimer = null;
+    _renderTooltip(chip, assignment);
+  }, 2000);
+}
+
+function _renderTooltip(chip, assignment) {
   const tooltip = document.getElementById('tooltip');
   const platform = getPlatform(assignment.course);
   const platformLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
@@ -1407,8 +1420,6 @@ function showTooltip(e, assignment) {
   tooltip.innerHTML = html;
   tooltip.classList.add('show');
 
-  // Use currentTarget (the chip/list-item div) not e.target (could be a child span)
-  const chip = e.currentTarget || e.target;
   const rect = chip.getBoundingClientRect();
   let left = rect.left;
   let top = rect.bottom + 4; // Small gap so tooltip feels connected
@@ -1425,6 +1436,8 @@ function showTooltip(e, assignment) {
 let tooltipHideTimer = null;
 
 function scheduleHideTooltip() {
+  // Cancel any pending show before scheduling a hide
+  if (tooltipShowTimer) { clearTimeout(tooltipShowTimer); tooltipShowTimer = null; }
   cancelHideTooltip();
   tooltipHideTimer = setTimeout(() => {
     document.getElementById('tooltip').classList.remove('show');
@@ -1439,6 +1452,7 @@ function cancelHideTooltip() {
 }
 
 function hideTooltip() {
+  if (tooltipShowTimer) { clearTimeout(tooltipShowTimer); tooltipShowTimer = null; }
   cancelHideTooltip();
   document.getElementById('tooltip').classList.remove('show');
 }
