@@ -337,6 +337,19 @@ def write_config(raw_text, assignments, auto_completed):
     return raw_text
 
 
+DATA_JSON_PATH = Path.home() / "tasky" / "assignment-calendar" / "data.json"
+
+
+def write_data_json(assignments, auto_completed):
+    """Export assignments and autoCompleted as a clean data.json for external apps."""
+    data = {
+        "scrapeDate": TODAY_DISPLAY,
+        "assignments": assignments,
+        "autoCompleted": list(auto_completed),
+    }
+    DATA_JSON_PATH.write_text(json.dumps(data, indent=2))
+
+
 # ── Selenium setup ─────────────────────────────────────────────────────
 
 def make_driver(headless=False):
@@ -1539,8 +1552,9 @@ def git_push():
             check=True, capture_output=True, text=True
         )
 
-        # Copy updated config.js
+        # Copy updated config.js and data.json
         shutil.copy2(CONFIG_PATH, os.path.join(tmp_dir, "config.js"))
+        shutil.copy2(DATA_JSON_PATH, os.path.join(tmp_dir, "data.json"))
 
         # Check if there's actually a diff
         result = subprocess.run(
@@ -1555,7 +1569,7 @@ def git_push():
         cmds = [
             ["git", "config", "user.email", "akchavan@umich.edu"],
             ["git", "config", "user.name", "Arjun Chavan"],
-            ["git", "add", "config.js"],
+            ["git", "add", "config.js", "data.json"],
         ]
         for cmd in cmds:
             subprocess.run(cmd, cwd=tmp_dir, check=True, capture_output=True)
@@ -1735,11 +1749,13 @@ def main():
         _print_done(len(added), len(updated), len(autocmp))
         return
 
-    # 9. Write config.js
-    _step_header(9, "Writing config.js")
+    # 9. Write config.js + data.json
+    _step_header(9, "Writing config.js + data.json")
     with Spinner("Saving…"):
         write_config(raw_text, merged, updated_ac)
+        write_data_json(merged, updated_ac)
     _ok(f"Saved → {CONFIG_PATH}")
+    _ok(f"Saved → {DATA_JSON_PATH}")
 
     # 10. Validate
     _step_header(10, "Validating config.js")
