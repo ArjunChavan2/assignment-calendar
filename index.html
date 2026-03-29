@@ -755,7 +755,7 @@
   <div class="data-age" id="dataAgeDaily"></div>
 </div>
 
-<div class="tooltip" id="tooltip"></div>
+<div class="tooltip" id="tooltip" onmouseenter="cancelHideTooltip()" onmouseleave="hideTooltip()"></div>
 
 <script>
 // ========== DERIVED FROM CONFIG ==========
@@ -1436,9 +1436,13 @@ function _renderTooltip(chip, assignment) {
 let tooltipHideTimer = null;
 
 function scheduleHideTooltip() {
-  // Cancel any pending show and hide immediately
+  // Cancel any pending show
   if (tooltipShowTimer) { clearTimeout(tooltipShowTimer); tooltipShowTimer = null; }
-  document.getElementById('tooltip').classList.remove('show');
+  // Short delay so mouse can travel onto the tooltip before it disappears
+  cancelHideTooltip();
+  tooltipHideTimer = setTimeout(() => {
+    document.getElementById('tooltip').classList.remove('show');
+  }, 120);
 }
 
 function cancelHideTooltip() {
