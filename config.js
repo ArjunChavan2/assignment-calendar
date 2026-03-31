@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "March 28, 2026",
+  scrapeDate: "March 30, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -359,7 +359,7 @@ const APP_CONFIG = {
       due: "2026-04-03",
       time: "11:59 PM",
       type: "quiz",
-      points: "20",
+      points: "16",
       hours: 1.5
     },
     {
@@ -369,7 +369,7 @@ const APP_CONFIG = {
       due: "2026-04-14",
       time: "11:59 PM",
       type: "quiz",
-      points: "16",
+      points: "22",
       hours: 1.5
     },
     {
@@ -379,7 +379,7 @@ const APP_CONFIG = {
       due: "2026-04-16",
       time: "11:59 PM",
       type: "quiz",
-      points: "22",
+      points: "20",
       hours: 1.5
     },
     {
@@ -1593,6 +1593,26 @@ const APP_CONFIG = {
       hours: 0.5
     },
     {
+      id: "s250-l17gw",
+      name: "Lecture 17 GW",
+      course: "stats250",
+      due: "2026-03-30",
+      time: "4:00 PM",
+      type: "lecture",
+      points: "20",
+      hours: 0.5
+    },
+    {
+      id: "s250-l18pw",
+      name: "Lecture 18 PW",
+      course: "stats250",
+      due: "2026-04-01",
+      time: "2:30 PM",
+      type: "lecture",
+      points: "10",
+      hours: 0.5
+    },
+    {
       id: "370-pl10",
       name: "Pre-Lab 10",
       course: "eecs370",
@@ -1746,6 +1766,15 @@ const APP_CONFIG = {
     "270-exam2",
     "442-q12",
     "s250-l16pw",
-    "s250-l16gw"
+    "s250-l16gw",
+    // Auto-added 2026-03-29: past assignments (due before 2026-03-27) not previously marked
+    "370-p3-cp",
+    "370-pl9",
+    "442-hw4",
+    "tc-w12",
+    // Auto-added 2026-03-30: past assignments (due before 2026-03-28) not previously marked
+    "270-q14",
+    "s250-ep07",
+    "s250-lab6"
   ]
 };
