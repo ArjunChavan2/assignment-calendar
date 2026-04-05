@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "April 1, 2026",
+  scrapeDate: "April 5, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -1547,7 +1547,7 @@ const APP_CONFIG = {
       name: "Oral Presentation Draft Slides",
       course: "tc300",
       due: "2026-04-02",
-      time: "11:30 AM",
+      time: "12:00 PM",
       type: "assignment",
       points: "10",
       hours: 3
@@ -1650,6 +1650,46 @@ const APP_CONFIG = {
       time: "11:50 AM",
       type: "quiz",
       points: "5",
+      hours: 0.5
+    },
+    {
+      id: "tc-w13",
+      name: "Week 13 - Presentation Revision Plan",
+      course: "tc300",
+      due: "2026-04-02",
+      time: "11:59 PM",
+      type: "assignment",
+      points: "2",
+      hours: 1
+    },
+    {
+      id: "tc-final-oral-presentation",
+      name: "Final Oral Presentation",
+      course: "tc300",
+      due: "2026-04-09",
+      time: "11:30 AM",
+      type: "assignment",
+      points: "50",
+      hours: 5
+    },
+    {
+      id: "370-pl11",
+      name: "Pre-Lab 11",
+      course: "eecs370",
+      due: "2026-04-09",
+      time: "11:55 PM",
+      type: "prelab",
+      points: "5",
+      hours: 1
+    },
+    {
+      id: "s250-l19pw",
+      name: "Lecture 19 PW",
+      course: "stats250",
+      due: "2026-04-06",
+      time: "2:30 PM",
+      type: "lecture",
+      points: "10",
       hours: 0.5
     }
   ],
@@ -1795,6 +1835,18 @@ const APP_CONFIG = {
     // Auto-added 2026-03-30: past assignments (due before 2026-03-28) not previously marked
     "270-q14",
     "s250-ep07",
-    "s250-lab6"
+    "s250-lab6",
+    // Auto-added 2026-04-02: past assignments (due before 2026-03-31) not previously marked
+    "s250-l17pw",
+    "s250-l17gw",
+    // Auto-added 2026-04-04: past assignments (due on/before 2026-04-01) not previously marked
+    "270-p6",
+    "s250-l18pw",
+    "s250-l18gw",
+    "442-q13",
+    // Auto-added 2026-04-05: past assignments (due on/before 2026-04-02) not previously marked
+    "370-p3",
+    "370-pl10",
+    "tc-w13"
   ]
 };
