@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "April 6, 2026",
+  scrapeDate: "April 7, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -1690,6 +1690,16 @@ const APP_CONFIG = {
       time: "2:30 PM",
       type: "lecture",
       points: "10",
+      hours: 0.5
+    },
+    {
+      id: "s250-l19gw",
+      name: "Lecture 19 GW",
+      course: "stats250",
+      due: "2026-04-06",
+      time: "4:00 PM",
+      type: "lecture",
+      points: "20",
       hours: 0.5
     }
   ],
