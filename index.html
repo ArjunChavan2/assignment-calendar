@@ -1938,16 +1938,16 @@ initFirebase();
     <div class="edit-modal-body">
       <form id="editForm" onsubmit="return false;">
         <div class="form-group">
-          <label>Name *</label>
+          <label for="editName">Name *</label>
           <input type="text" id="editName" required placeholder="e.g. Homework 3">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Course *</label>
+            <label for="editCourse">Course *</label>
             <select id="editCourse" required></select>
           </div>
           <div class="form-group">
-            <label>Type *</label>
+            <label for="editType">Type *</label>
             <select id="editType" required>
               <option value="project">Project</option>
               <option value="homework">Homework</option>
@@ -1964,26 +1964,26 @@ initFirebase();
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Due Date *</label>
+            <label for="editDue">Due Date *</label>
             <input type="date" id="editDue" required>
           </div>
           <div class="form-group">
-            <label>Due Time</label>
+            <label for="editTime">Due Time</label>
             <input type="text" id="editTime" placeholder="11:59 PM">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Points</label>
+            <label for="editPoints">Points</label>
             <input type="text" id="editPoints" placeholder="50">
           </div>
           <div class="form-group">
-            <label>Est. Hours</label>
+            <label for="editHours">Est. Hours</label>
             <input type="number" id="editHours" step="0.5" min="0" placeholder="6">
           </div>
         </div>
         <div class="form-group">
-          <label>Spec URL</label>
+          <label for="editSpecUrl">Spec URL</label>
           <input type="url" id="editSpecUrl" placeholder="https://...">
         </div>
       </form>
