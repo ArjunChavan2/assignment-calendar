@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 270 · EECS 370 · EECS 442 · STATS 250 · TCHNCLCM 300 — Winter 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "April 9, 2026",
+  scrapeDate: "April 13, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com
@@ -1866,6 +1866,14 @@ const APP_CONFIG = {
     "s250-lab7",
     // Auto-added 2026-04-09: past assignments (due on/before 2026-04-07) not previously marked
     "s250-l19pw",
-    "s250-l19gw"
+    "s250-l19gw",
+    // Auto-added 2026-04-12: past assignments (due on/before 2026-04-09) not previously marked
+    "370-pl11",
+    "442-hw5",
+    "tc-final-oral-presentation",
+    // Auto-added 2026-04-13: past assignments (due on/before 2026-04-11) not previously marked
+    "270-p7-cp",
+    "s250-ep09",
+    "s250-cs3"
   ]
 };
