@@ -857,16 +857,73 @@
 
 <script>
 // ========== DERIVED FROM CONFIG ==========
-const courses = APP_CONFIG.courses;
+const configCourses = APP_CONFIG.courses;
+let courses = { ...configCourses };
 const assignments = APP_CONFIG.assignments;
-const courseNames = {};
+let courseNames = {};
 for (const [id, c] of Object.entries(courses)) {
   courseNames[id] = c.name;
 }
 
+// ========== COLOR HELPERS ==========
+function hexToRgb(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  return { r: parseInt(hex.substring(0,2),16), g: parseInt(hex.substring(2,4),16), b: parseInt(hex.substring(4,6),16) };
+}
+function lightenColor(hex, amount) {
+  const {r,g,b} = hexToRgb(hex);
+  const lr = Math.min(255, r + Math.round((255 - r) * amount));
+  const lg = Math.min(255, g + Math.round((255 - g) * amount));
+  const lb = Math.min(255, b + Math.round((255 - b) * amount));
+  return '#' + [lr,lg,lb].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+function darkenColor(hex, amount) {
+  const {r,g,b} = hexToRgb(hex);
+  const dr = Math.round(r * (1 - amount));
+  const dg = Math.round(g * (1 - amount));
+  const db = Math.round(b * (1 - amount));
+  return '#' + [dr,dg,db].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+function tagToCourse(tag) {
+  return {
+    name: tag.name,
+    color: tag.color,
+    bg: lightenColor(tag.color, 0.85),
+    darkColor: lightenColor(tag.color, 0.35),
+    darkBg: darkenColor(tag.color, 0.7),
+    platform: null,
+    platformUrl: null,
+    _isTag: true
+  };
+}
+
+// ========== REBUILD COURSE MAP ==========
+// Merges config courses + tag-derived pseudo-courses
+function rebuildCourseMap() {
+  courses = { ...configCourses };
+  courseNames = {};
+  for (const [id, c] of Object.entries(configCourses)) {
+    courseNames[id] = c.name;
+  }
+  // Add each tag as a selectable course category
+  for (const [tid, tag] of Object.entries(tags)) {
+    courses[tid] = tagToCourse(tag);
+    courseNames[tid] = tag.name;
+    if (!(tid in filters)) filters[tid] = true;
+  }
+  injectCourseStyles();
+  rebuildLegend();
+  rebuildFilterButtons();
+}
+
 // ========== INJECT DYNAMIC COURSE CSS ==========
-(function injectCourseStyles() {
-  const style = document.createElement('style');
+let _courseStyleEl = null;
+function injectCourseStyles() {
+  if (!_courseStyleEl) {
+    _courseStyleEl = document.createElement('style');
+    document.head.appendChild(_courseStyleEl);
+  }
   let css = ':root {\n';
   for (const [id, c] of Object.entries(courses)) {
     css += `  --${id}: ${c.color}; --${id}-bg: ${c.bg};\n`;
@@ -886,9 +943,36 @@ for (const [id, c] of Object.entries(courses)) {
     css += `.filter-btns button.f-on-${id} { background: var(--${id}-bg); color: var(--${id}); border-color: var(--${id}); }\n`;
   }
   css += `.filter-btns button.f-off { background: var(--hover-bg); color: #9ca3af; border-color: var(--border); }\n`;
-  style.textContent = css;
-  document.head.appendChild(style);
-})();
+  _courseStyleEl.textContent = css;
+}
+
+// Rebuild legend dynamically
+function rebuildLegend() {
+  const legend = document.getElementById('legendContainer');
+  if (!legend) return;
+  let legendHtml = '';
+  for (const [id, c] of Object.entries(courses)) {
+    const shortName = c._isTag ? c.name : c.name.replace(/^(EECS|STATS|TC)\s*/, '').substring(0, 5);
+    legendHtml += `<div class="legend-item"><div class="legend-dot" style="background:var(--${id})"></div>${shortName}</div>`;
+  }
+  legendHtml += `<div class="legend-item"><div class="legend-dot" style="background:var(--done)"></div>Done</div>`;
+  legend.innerHTML = legendHtml;
+}
+
+// Rebuild filter buttons dynamically
+function rebuildFilterButtons() {
+  const filterContainer = document.getElementById('filterContainer');
+  if (!filterContainer) return;
+  let filterHtml = '';
+  for (const [id, c] of Object.entries(courses)) {
+    const shortName = c._isTag ? c.name : c.name.replace(/^(EECS|STATS|TC)\s*/, '').substring(0, 5);
+    filterHtml += `<button onclick="toggleFilter('${id}')" id="filter-${id}">${shortName}</button>`;
+  }
+  filterContainer.innerHTML = filterHtml;
+}
+
+// Initial injection
+injectCourseStyles();
 
 // ========== POPULATE DYNAMIC ELEMENTS ==========
 (function populateUI() {
@@ -918,24 +1002,9 @@ for (const [id, c] of Object.entries(courses)) {
     `<strong>Session check:</strong> Your assignment data was last scraped on <span id="lastScraped">${APP_CONFIG.scrapeDate}</span>. ` +
     `If data looks stale, re-authenticate: ${platformLinks.join(' | ')}`;
 
-  // Legend
-  const legend = document.getElementById('legendContainer');
-  let legendHtml = '';
-  for (const [id, c] of Object.entries(courses)) {
-    const shortName = c.name.replace(/^(EECS|STATS|TC)\s*/, '').substring(0, 5);
-    legendHtml += `<div class="legend-item"><div class="legend-dot" style="background:var(--${id})"></div>${shortName}</div>`;
-  }
-  legendHtml += `<div class="legend-item"><div class="legend-dot" style="background:var(--done)"></div>Done</div>`;
-  legend.innerHTML = legendHtml;
-
-  // Filter buttons
-  const filterContainer = document.getElementById('filterContainer');
-  let filterHtml = '';
-  for (const [id, c] of Object.entries(courses)) {
-    const shortName = c.name.replace(/^(EECS|STATS|TC)\s*/, '').substring(0, 5);
-    filterHtml += `<button onclick="toggleFilter('${id}')" id="filter-${id}">${shortName}</button>`;
-  }
-  filterContainer.innerHTML = filterHtml;
+  // Legend & filter buttons (built dynamically, also rebuilt when tags change)
+  rebuildLegend();
+  rebuildFilterButtons();
 })();
 
 // ========== STATE ==========
@@ -1034,6 +1103,7 @@ function initFirebase() {
       for (const tid of Object.keys(tags)) {
         if (!(tid in tagFilters)) tagFilters[tid] = true;
       }
+      rebuildCourseMap();
       renderTagFilterBar();
       render();
     });
@@ -1160,12 +1230,27 @@ function saveEditsLocal() {
 
 function populateCourseDropdown() {
   const sel = document.getElementById('editCourse');
-  if (sel.options.length > 0) return; // already populated
-  for (const [id, c] of Object.entries(courses)) {
+  // Always rebuild to include new tag-based categories
+  sel.innerHTML = '';
+  // Config courses first
+  for (const [id, c] of Object.entries(configCourses)) {
     const opt = document.createElement('option');
     opt.value = id;
     opt.textContent = c.name;
     sel.appendChild(opt);
+  }
+  // Tag-based categories
+  const tagIds = Object.keys(tags);
+  if (tagIds.length > 0) {
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = 'Custom Categories';
+    for (const tid of tagIds) {
+      const opt = document.createElement('option');
+      opt.value = tid;
+      opt.textContent = tags[tid].name;
+      optgroup.appendChild(opt);
+    }
+    sel.appendChild(optgroup);
   }
 }
 
@@ -1716,8 +1801,10 @@ function createTag() {
   try { localStorage.setItem('tags-v1', JSON.stringify(tags)); } catch(e) {}
 
   nameInput.value = '';
+  rebuildCourseMap();
   renderTagList();
   renderTagFilterBar();
+  render();
 }
 
 function deleteTag(tagId) {
@@ -1742,6 +1829,7 @@ function deleteTag(tagId) {
     localStorage.setItem('assignment-tags-v1', JSON.stringify(assignmentTags));
   } catch(e) {}
 
+  rebuildCourseMap();
   renderTagList();
   renderTagFilterBar();
   render();
@@ -1938,7 +2026,8 @@ function render() {
 
   // Update filter button styles
   for (const id of Object.keys(courses)) {
-    document.getElementById('filter-' + id).className = filters[id] ? 'f-on-' + id : 'f-off';
+    const btn = document.getElementById('filter-' + id);
+    if (btn) btn.className = filters[id] ? 'f-on-' + id : 'f-off';
   }
 
   document.getElementById('calendarView').style.display = viewMode === 'calendar' ? 'block' : 'none';
@@ -2297,6 +2386,7 @@ function updateThemeIcon() {
 })();
 
 // ========== INIT ==========
+rebuildCourseMap();   // merge tag-based categories into courses
 autoMarkPast();
 checkDataAge();
 renderTagFilterBar();
@@ -2382,12 +2472,13 @@ initFirebase();
   <div class="edit-modal-backdrop" onclick="closeTagManager()"></div>
   <div class="edit-modal-content">
     <div class="edit-modal-header">
-      <h2>Manage Tags</h2>
+      <h2>Manage Categories</h2>
       <button class="edit-modal-close" onclick="closeTagManager()">&times;</button>
     </div>
     <div class="tag-manager-body">
+      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:12px;">Create custom categories (e.g. Internship, Research, Personal) that appear as course options when adding assignments.</p>
       <div class="tag-create-row">
-        <input type="text" id="newTagName" placeholder="New tag name..." maxlength="30">
+        <input type="text" id="newTagName" placeholder="e.g. Internship, Research..." maxlength="30">
         <input type="color" id="newTagColor" value="#6366f1" title="Tag color">
         <button class="btn-primary" onclick="createTag()">Create</button>
       </div>
