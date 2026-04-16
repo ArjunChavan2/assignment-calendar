@@ -610,6 +610,101 @@
     border-radius: 2px;
   }
 
+  /* ---- Tag System ---- */
+  .tag-chip {
+    display: inline-flex; align-items: center; gap: 2px;
+    font-size: 0.55rem; font-weight: 600; padding: 0px 4px;
+    border-radius: 3px; white-space: nowrap; line-height: 1.4;
+    vertical-align: middle;
+  }
+  .tag-chip-remove {
+    cursor: pointer; font-size: 0.6rem; opacity: 0.6;
+    margin-left: 1px;
+  }
+  .tag-chip-remove:hover { opacity: 1; }
+  .list-item .tag-chip { font-size: 0.65rem; padding: 1px 6px; border-radius: 4px; }
+
+  /* Tag filter bar */
+  .tag-filter-bar {
+    display: flex; gap: 4px; align-items: center; flex-wrap: wrap;
+  }
+  .tag-filter-bar button {
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 999px;
+    border: 1.5px solid; cursor: pointer; font-weight: 600;
+    transition: all 0.15s; background: transparent;
+  }
+  .tag-filter-bar button.tag-f-off { opacity: 0.35; }
+
+  /* Tag Manager Modal */
+  .tag-manager-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 2000; font-family: inherit;
+  }
+  .tag-manager-modal.show { display: flex; align-items: center; justify-content: center; }
+  .tag-manager-body { padding: 18px 20px; flex: 1; overflow-y: auto; max-height: 60vh; }
+  .tag-create-row {
+    display: flex; gap: 8px; align-items: center; margin-bottom: 14px;
+  }
+  .tag-create-row input[type="text"] {
+    flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg); color: var(--text); font-size: 0.85rem;
+  }
+  .tag-create-row input[type="color"] {
+    width: 36px; height: 34px; border: 1px solid var(--border); border-radius: 6px;
+    cursor: pointer; padding: 2px; background: var(--bg);
+  }
+  .tag-list-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px;
+    background: var(--card);
+  }
+  .tag-list-item .tag-swatch {
+    width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0;
+  }
+  .tag-list-item .tag-label { flex: 1; font-size: 0.88rem; font-weight: 600; }
+  .tag-list-item .tag-count { font-size: 0.75rem; color: var(--gray); }
+  .tag-list-item .tag-delete-btn {
+    background: none; border: none; color: #dc2626; cursor: pointer;
+    font-size: 0.8rem; padding: 2px 6px; border-radius: 4px;
+  }
+  .tag-list-item .tag-delete-btn:hover { background: #fecaca; }
+  [data-theme="dark"] .tag-list-item .tag-delete-btn:hover { background: #4c1d1d; }
+  .tag-empty { text-align: center; padding: 20px; color: var(--gray); font-size: 0.85rem; }
+
+  /* Tag picker in edit modal */
+  .tag-picker { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .tag-picker-item {
+    display: flex; align-items: center; gap: 4px; padding: 3px 8px;
+    border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+    cursor: pointer; border: 2px solid transparent; transition: all 0.15s;
+    user-select: none;
+  }
+  .tag-picker-item:hover { filter: brightness(0.9); }
+  .tag-picker-item.selected { border-color: var(--text); box-shadow: 0 0 0 1px var(--text); }
+  .tag-picker-item .tag-pick-check {
+    width: 12px; height: 12px; border-radius: 2px; border: 1.5px solid currentColor;
+    display: flex; align-items: center; justify-content: center; font-size: 0.55rem;
+  }
+  .tag-picker-item.selected .tag-pick-check { background: currentColor; }
+
+  /* Export button */
+  .export-btn {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 12px; font-size: 0.8rem; cursor: pointer; color: var(--text);
+    transition: all 0.15s;
+  }
+  .export-btn:hover { background: var(--border); }
+
+  /* Always-visible add button */
+  .add-btn-always {
+    background: #2563eb; color: #fff; border: none; border-radius: 6px;
+    padding: 6px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .add-btn-always:hover { background: #1d4ed8; }
+  [data-theme="dark"] .add-btn-always { background: #3b82f6; }
+  [data-theme="dark"] .add-btn-always:hover { background: #2563eb; }
+
   /* Daily View */
   .daily-container { padding: 24px; max-width: 700px; margin: 0 auto; display: none; }
   .daily-header {
@@ -715,6 +810,7 @@
   <div class="controls">
     <div class="legend" id="legendContainer"></div>
     <div class="filter-btns" id="filterContainer"></div>
+    <div class="tag-filter-bar" id="tagFilterBar"></div>
     <div class="nav-btns">
       <button onclick="changeMonth(-1)">&lsaquo;</button>
       <span class="month-label" id="monthLabel"></span>
@@ -723,8 +819,10 @@
     <button onclick="goToday()">Today</button>
     <button id="viewToggle" onclick="toggleView()">List View</button>
     <button id="dailyToggle" onclick="switchToDaily()">Daily</button>
+    <button class="add-btn-always" onclick="openAddModal()" title="Add assignment">+ Add</button>
+    <button class="export-btn" onclick="exportConfig()" title="Export config.js">&#8681; Export</button>
     <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()" title="Toggle edit mode">&#9998; Edit</button>
-    <button class="add-btn" id="addBtn" onclick="openAddModal()" title="Add assignment">+ Add</button>
+    <button class="edit-mode-btn" onclick="openTagManager()" title="Manage tags">&#9873; Tags</button>
     <div style="display:flex;align-items:center;gap:4px;">
       <span class="theme-icon" id="themeIcon">&#9788;</span>
       <button class="dark-toggle" onclick="toggleTheme()" id="darkToggle" title="Toggle dark mode"></button>
@@ -860,6 +958,14 @@ let editsRef = null;
 let additionsRef = null;
 let deletionsRef = null;
 
+// Tag system state
+let tags = {};             // {tagId: {id, name, color}}
+let assignmentTags = {};   // {assignmentId: {tagId: true, ...}}
+let tagFilters = {};       // {tagId: true/false} — true = active
+let tagsRef = null;
+let assignmentTagsRef = null;
+let selectedModalTags = {}; // temp state for edit modal tag picker
+
 // ========== HELPER FUNCTIONS ==========
 function getPlatform(course) {
   return courses[course] ? courses[course].platform : 'web';
@@ -918,6 +1024,24 @@ function initFirebase() {
     additionsRef.on('value', (snap) => { additions = snap.val() || {}; render(); });
     deletionsRef.on('value', (snap) => { deletions = snap.val() || {}; render(); });
 
+    // Tag system Firebase refs
+    tagsRef = db.ref('tags');
+    assignmentTagsRef = db.ref('assignmentTags');
+
+    tagsRef.on('value', (snap) => {
+      tags = snap.val() || {};
+      // Initialize filters for new tags
+      for (const tid of Object.keys(tags)) {
+        if (!(tid in tagFilters)) tagFilters[tid] = true;
+      }
+      renderTagFilterBar();
+      render();
+    });
+    assignmentTagsRef.on('value', (snap) => {
+      assignmentTags = snap.val() || {};
+      render();
+    });
+
     // Daily study task completions
     dailyTaskRef = db.ref('dailyTasks');
     dailyTaskRef.on('value', (snap) => {
@@ -949,6 +1073,14 @@ try {
   if (se) edits = JSON.parse(se);
   if (sa) additions = JSON.parse(sa);
   if (sd) deletions = JSON.parse(sd);
+} catch(e) {}
+
+// Load tags from localStorage (offline cache)
+try {
+  const st = localStorage.getItem('tags-v1');
+  const sat = localStorage.getItem('assignment-tags-v1');
+  if (st) { tags = JSON.parse(st); for (const tid of Object.keys(tags)) tagFilters[tid] = true; }
+  if (sat) assignmentTags = JSON.parse(sat);
 } catch(e) {}
 
 function saveDone() {
@@ -1015,7 +1147,6 @@ function getMergedAssignments() {
 function toggleEditMode() {
   editMode = !editMode;
   document.getElementById('editModeBtn').classList.toggle('active', editMode);
-  document.getElementById('addBtn').style.display = editMode ? 'inline-block' : 'none';
   render();
 }
 
@@ -1054,6 +1185,7 @@ function openEditModal(assignmentId) {
   document.getElementById('editForm').dataset.editingId = a.id;
   document.getElementById('editForm').dataset.isNew = 'false';
   document.getElementById('editDeleteBtn').style.display = 'inline-block';
+  renderEditTagPicker(a.id);
   document.getElementById('editModal').classList.add('show');
 }
 
@@ -1064,6 +1196,7 @@ function openAddModal() {
   document.getElementById('editForm').dataset.editingId = '';
   document.getElementById('editForm').dataset.isNew = 'true';
   document.getElementById('editDeleteBtn').style.display = 'none';
+  renderEditTagPicker(null);
   document.getElementById('editModal').classList.add('show');
 }
 
@@ -1119,6 +1252,9 @@ function saveFromModal() {
     }
   }
 
+  // Save tags for this assignment
+  saveTagsForAssignment(obj.id);
+
   saveEditsLocal();
   closeEditModal();
   render();
@@ -1161,7 +1297,7 @@ function handleAssignmentClick(e, assignmentId) {
 }
 
 function getAssignmentsForDate(dateStr) {
-  return currentAssignments.filter(a => a.due === dateStr && filters[a.course]);
+  return currentAssignments.filter(a => a.due === dateStr && filters[a.course] && passesTagFilter(a.id));
 }
 
 function formatHours(h) {
@@ -1552,6 +1688,241 @@ function checkPanicMode() {
   }
 }
 
+// ========== TAG SYSTEM ==========
+function openTagManager() {
+  renderTagList();
+  document.getElementById('tagManagerModal').classList.add('show');
+}
+
+function closeTagManager() {
+  document.getElementById('tagManagerModal').classList.remove('show');
+}
+
+function createTag() {
+  const nameInput = document.getElementById('newTagName');
+  const colorInput = document.getElementById('newTagColor');
+  const name = nameInput.value.trim();
+  if (!name) { alert('Please enter a tag name.'); return; }
+
+  const id = 'tag-' + Date.now();
+  const tag = { id, name, color: colorInput.value };
+  tags[id] = tag;
+  tagFilters[id] = true;
+
+  if (tagsRef && firebaseReady) {
+    setSyncStatus('syncing');
+    tagsRef.child(id).set(tag).then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
+  }
+  try { localStorage.setItem('tags-v1', JSON.stringify(tags)); } catch(e) {}
+
+  nameInput.value = '';
+  renderTagList();
+  renderTagFilterBar();
+}
+
+function deleteTag(tagId) {
+  if (!confirm('Delete this tag? It will be removed from all assignments.')) return;
+  delete tags[tagId];
+  delete tagFilters[tagId];
+
+  // Remove from all assignment-tag mappings
+  for (const aId of Object.keys(assignmentTags)) {
+    if (assignmentTags[aId] && assignmentTags[aId][tagId]) {
+      delete assignmentTags[aId][tagId];
+      if (Object.keys(assignmentTags[aId]).length === 0) delete assignmentTags[aId];
+    }
+  }
+
+  if (tagsRef && firebaseReady) {
+    tagsRef.child(tagId).remove();
+    assignmentTagsRef.set(assignmentTags || {});
+  }
+  try {
+    localStorage.setItem('tags-v1', JSON.stringify(tags));
+    localStorage.setItem('assignment-tags-v1', JSON.stringify(assignmentTags));
+  } catch(e) {}
+
+  renderTagList();
+  renderTagFilterBar();
+  render();
+}
+
+function renderTagList() {
+  const container = document.getElementById('tagListContainer');
+  const tagIds = Object.keys(tags);
+  if (tagIds.length === 0) {
+    container.innerHTML = '<div class="tag-empty">No tags yet. Create one above!</div>';
+    return;
+  }
+  let html = '';
+  for (const tid of tagIds) {
+    const t = tags[tid];
+    // Count assignments with this tag
+    let count = 0;
+    for (const aId of Object.keys(assignmentTags)) {
+      if (assignmentTags[aId] && assignmentTags[aId][tid]) count++;
+    }
+    html += `<div class="tag-list-item">`;
+    html += `<div class="tag-swatch" style="background:${t.color}"></div>`;
+    html += `<span class="tag-label">${t.name}</span>`;
+    html += `<span class="tag-count">${count} assignment${count !== 1 ? 's' : ''}</span>`;
+    html += `<button class="tag-delete-btn" onclick="deleteTag('${tid}')" title="Delete tag">&times;</button>`;
+    html += `</div>`;
+  }
+  container.innerHTML = html;
+}
+
+function renderTagFilterBar() {
+  const bar = document.getElementById('tagFilterBar');
+  const tagIds = Object.keys(tags);
+  if (tagIds.length === 0) { bar.innerHTML = ''; return; }
+  let html = '';
+  for (const tid of tagIds) {
+    const t = tags[tid];
+    const isOn = tagFilters[tid] !== false;
+    const cls = isOn ? '' : ' tag-f-off';
+    html += `<button class="${cls}" style="color:${t.color};border-color:${t.color};${isOn ? 'background:' + t.color + '18' : ''}" onclick="toggleTagFilter('${tid}')">${t.name}</button>`;
+  }
+  bar.innerHTML = html;
+}
+
+function toggleTagFilter(tagId) {
+  tagFilters[tagId] = !tagFilters[tagId];
+  renderTagFilterBar();
+  render();
+}
+
+function getTagsForAssignment(assignmentId) {
+  const mapping = assignmentTags[assignmentId];
+  if (!mapping) return [];
+  return Object.keys(mapping).filter(tid => mapping[tid] && tags[tid]);
+}
+
+function renderTagChips(assignmentId, small) {
+  const tagIds = getTagsForAssignment(assignmentId);
+  if (tagIds.length === 0) return '';
+  let html = '';
+  for (const tid of tagIds) {
+    const t = tags[tid];
+    if (!t) continue;
+    const bg = t.color + '22';
+    html += `<span class="tag-chip" style="background:${bg};color:${t.color}">${t.name}</span>`;
+  }
+  return html;
+}
+
+// Does this assignment pass the active tag filters?
+// If ANY tag filter is active, assignment must have at least one of the active tags
+// If NO tag filters are toggled off, all assignments pass
+function passesTagFilter(assignmentId) {
+  const tagIds = Object.keys(tags);
+  if (tagIds.length === 0) return true;
+  const anyFilterOff = tagIds.some(tid => tagFilters[tid] === false);
+  if (!anyFilterOff) return true; // All tag filters on = show everything
+  const activeFilters = tagIds.filter(tid => tagFilters[tid] !== false);
+  if (activeFilters.length === 0) return true; // All toggled off = show everything
+  const aTags = getTagsForAssignment(assignmentId);
+  if (aTags.length === 0) return true; // Untagged assignments always show
+  return aTags.some(tid => tagFilters[tid] !== false);
+}
+
+// Tag picker in edit modal
+function renderEditTagPicker(assignmentId) {
+  const picker = document.getElementById('editTagPicker');
+  const tagIds = Object.keys(tags);
+  if (tagIds.length === 0) {
+    picker.innerHTML = '<span style="font-size:0.8rem;color:var(--gray)">No tags created yet. Use the Tags button to create some.</span>';
+    return;
+  }
+  // Load current tags for this assignment
+  selectedModalTags = {};
+  if (assignmentId && assignmentTags[assignmentId]) {
+    selectedModalTags = { ...assignmentTags[assignmentId] };
+  }
+  _renderTagPickerItems();
+}
+
+function _renderTagPickerItems() {
+  const picker = document.getElementById('editTagPicker');
+  let html = '';
+  for (const tid of Object.keys(tags)) {
+    const t = tags[tid];
+    const isSel = selectedModalTags[tid];
+    const bg = t.color + (isSel ? '33' : '15');
+    html += `<div class="tag-picker-item${isSel ? ' selected' : ''}" style="background:${bg};color:${t.color}" onclick="toggleModalTag('${tid}')">`;
+    html += `<span class="tag-pick-check">${isSel ? '&#10003;' : ''}</span>`;
+    html += `${t.name}</div>`;
+  }
+  picker.innerHTML = html;
+}
+
+function toggleModalTag(tagId) {
+  if (selectedModalTags[tagId]) {
+    delete selectedModalTags[tagId];
+  } else {
+    selectedModalTags[tagId] = true;
+  }
+  _renderTagPickerItems();
+}
+
+function saveTagsForAssignment(assignmentId) {
+  if (!assignmentId) return;
+  const hasAnyTags = Object.keys(selectedModalTags).some(k => selectedModalTags[k]);
+  if (hasAnyTags) {
+    assignmentTags[assignmentId] = { ...selectedModalTags };
+  } else {
+    delete assignmentTags[assignmentId];
+  }
+  if (assignmentTagsRef && firebaseReady) {
+    setSyncStatus('syncing');
+    if (hasAnyTags) {
+      assignmentTagsRef.child(assignmentId).set(assignmentTags[assignmentId])
+        .then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
+    } else {
+      assignmentTagsRef.child(assignmentId).remove()
+        .then(() => setSyncStatus('synced')).catch(() => setSyncStatus('error'));
+    }
+  }
+  try { localStorage.setItem('assignment-tags-v1', JSON.stringify(assignmentTags)); } catch(e) {}
+}
+
+// ========== EXPORT CONFIG.JS ==========
+function exportConfig() {
+  const merged = getMergedAssignments();
+  const acIds = [...(APP_CONFIG.autoCompleted || [])];
+  // Add any newly auto-completed IDs from doneMap
+  for (const id of Object.keys(doneMap)) {
+    if (doneMap[id] && !acIds.includes(id)) acIds.push(id);
+  }
+
+  let js = '// ============================================================\n';
+  js += '// ASSIGNMENT CALENDAR — USER CONFIGURATION (exported)\n';
+  js += '// ============================================================\n\n';
+  js += 'const APP_CONFIG = {\n';
+  js += `  title: ${JSON.stringify(APP_CONFIG.title)},\n`;
+  js += `  subtitle: ${JSON.stringify(APP_CONFIG.subtitle)},\n`;
+  js += `  scrapeDate: ${JSON.stringify(APP_CONFIG.scrapeDate)},\n\n`;
+  js += `  firebase: ${JSON.stringify(APP_CONFIG.firebase, null, 4).replace(/\n/g, '\n  ')},\n\n`;
+  js += '  courses: ' + JSON.stringify(APP_CONFIG.courses, null, 4).replace(/\n/g, '\n  ') + ',\n\n';
+  js += '  assignments: [\n';
+  for (const a of merged) {
+    js += '    ' + JSON.stringify(a) + ',\n';
+  }
+  js += '  ],\n\n';
+  js += '  autoCompleted: ' + JSON.stringify(acIds, null, 4).replace(/\n/g, '\n  ') + '\n';
+  js += '};\n';
+
+  const blob = new Blob([js], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'config.js';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ========== RENDER ==========
 function render() {
   // Merge config + Firebase edits
@@ -1627,6 +1998,8 @@ function renderCalendar() {
         html += `<span class="priority-badge ${workload.cls}">${workload.label}</span>`;
       }
       html += `<span>${a.name}</span>`;
+      const tagHtml = renderTagChips(a.id, true);
+      if (tagHtml) html += ` ${tagHtml}`;
       html += `<span class="chip-edit-icon">&#9998;</span>`;
       html += `</div>`;
     }
@@ -1657,7 +2030,7 @@ function renderCalendar() {
 }
 
 function renderList() {
-  const filtered = currentAssignments.filter(a => filters[a.course]);
+  const filtered = currentAssignments.filter(a => filters[a.course] && passesTagFilter(a.id));
   const overdue = filtered.filter(a => a.due < todayStr && !doneMap[a.id]);
   const upcoming = filtered.filter(a => a.due >= todayStr && !doneMap[a.id]).sort((a,b) => a.due.localeCompare(b.due));
   const completed = filtered.filter(a => doneMap[a.id]).sort((a,b) => a.due.localeCompare(b.due));
@@ -1708,6 +2081,7 @@ function renderListItem(a) {
       </div>
       ${hoursHtml}
       ${priorityHtml}
+      ${renderTagChips(a.id, false)}
       <span class="course-tag ${a.course}">${courseNames[a.course]}</span>
       <span class="list-item-edit-icon">&#9998;</span>
     </div>
@@ -1850,6 +2224,8 @@ function renderDaily() {
       html += `</div>`;
       if (a.hours) html += `<div class="daily-time-badge">${formatHours(a.hours)}</div>`;
       html += priHtml;
+      const dailyTagHtml = renderTagChips(a.id, false);
+      if (dailyTagHtml) html += dailyTagHtml;
       html += `<span class="course-tag ${a.course}">${courseNames[a.course]}</span>`;
       html += `</div>`;
     }
@@ -1923,6 +2299,7 @@ function updateThemeIcon() {
 // ========== INIT ==========
 autoMarkPast();
 checkDataAge();
+renderTagFilterBar();
 render();
 initFirebase();
 </script>
@@ -1986,12 +2363,38 @@ initFirebase();
           <label for="editSpecUrl">Spec URL</label>
           <input type="url" id="editSpecUrl" placeholder="https://...">
         </div>
+        <div class="form-group">
+          <label>Tags</label>
+          <div class="tag-picker" id="editTagPicker"></div>
+        </div>
       </form>
     </div>
     <div class="edit-modal-footer">
       <button class="btn-danger btn-danger-left" id="editDeleteBtn" style="display:none;" onclick="deleteFromModal()">Delete</button>
       <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
       <button class="btn-primary" onclick="saveFromModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tag Manager Modal -->
+<div class="tag-manager-modal" id="tagManagerModal">
+  <div class="edit-modal-backdrop" onclick="closeTagManager()"></div>
+  <div class="edit-modal-content">
+    <div class="edit-modal-header">
+      <h2>Manage Tags</h2>
+      <button class="edit-modal-close" onclick="closeTagManager()">&times;</button>
+    </div>
+    <div class="tag-manager-body">
+      <div class="tag-create-row">
+        <input type="text" id="newTagName" placeholder="New tag name..." maxlength="30">
+        <input type="color" id="newTagColor" value="#6366f1" title="Tag color">
+        <button class="btn-primary" onclick="createTag()">Create</button>
+      </div>
+      <div id="tagListContainer"></div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-secondary" onclick="closeTagManager()">Close</button>
     </div>
   </div>
 </div>
