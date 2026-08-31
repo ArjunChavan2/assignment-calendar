@@ -338,6 +338,8 @@ def write_config(raw_text, assignments, auto_completed):
 
 
 DATA_JSON_PATH = Path.home() / "tasky" / "assignment-calendar" / "data.json"
+CALENDAR_ICS_PATH = Path.home() / "tasky" / "assignment-calendar" / "calendar.ics"
+GCAL_EXPORT_PATH = Path.home() / "tasky" / "assignment-calendar" / "gcal-export.js"
 
 
 def write_data_json(assignments, auto_completed):
@@ -1538,6 +1540,21 @@ def validate_config():
     return True
 
 
+# ── Google Calendar feed ──────────────────────────────────────────────
+
+def regenerate_calendar():
+    """Rebuild calendar.ics so Google Calendar picks up the new deadlines."""
+    result = subprocess.run(
+        ["node", str(GCAL_EXPORT_PATH)],
+        cwd=str(GCAL_EXPORT_PATH.parent),
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        _err(f"Calendar export failed:\n{result.stderr}")
+        return False
+    return True
+
+
 # ── Git push ──────────────────────────────────────────────────────────
 
 def git_push():
@@ -1555,6 +1572,8 @@ def git_push():
         # Copy updated config.js and data.json
         shutil.copy2(CONFIG_PATH, os.path.join(tmp_dir, "config.js"))
         shutil.copy2(DATA_JSON_PATH, os.path.join(tmp_dir, "data.json"))
+        if os.path.exists(CALENDAR_ICS_PATH):
+            shutil.copy2(CALENDAR_ICS_PATH, os.path.join(tmp_dir, "calendar.ics"))
 
         # Check if there's actually a diff
         result = subprocess.run(
@@ -1569,7 +1588,7 @@ def git_push():
         cmds = [
             ["git", "config", "user.email", "akchavan@umich.edu"],
             ["git", "config", "user.name", "Arjun Chavan"],
-            ["git", "add", "config.js", "data.json"],
+            ["git", "add", "config.js", "data.json", "calendar.ics"],
         ]
         for cmd in cmds:
             subprocess.run(cmd, cwd=tmp_dir, check=True, capture_output=True)
@@ -1766,8 +1785,17 @@ def main():
         return
     _ok(f"{len(merged)} assignments · syntax OK")
 
-    # 11. Push
-    _step_header(11, "Pushing to GitHub")
+    # 11. Rebuild the Google Calendar feed
+    _step_header(11, "Rebuilding Google Calendar feed")
+    with Spinner("Generating calendar.ics…"):
+        cal_ok = regenerate_calendar()
+    if cal_ok:
+        _ok(f"Saved → {CALENDAR_ICS_PATH}")
+    else:
+        _warn("calendar.ics not regenerated — Google Calendar will serve stale data")
+
+    # 12. Push
+    _step_header(12, "Pushing to GitHub")
     if args.no_push:
         _info("Skipped (--no-push)")
     else:
