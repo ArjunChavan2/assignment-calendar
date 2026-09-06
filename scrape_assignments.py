@@ -128,35 +128,47 @@ ICS_URL = (
 )
 CHROME_PROFILE_DIR = Path.home() / ".assignment-scraper-profile"
 
+# ---- Term ----
+# Update these four lines each term; everything else keys off them.
+TERM_NAME = "Fall 2026"
+TERM_START = "2026-08-31"
+TERM_END = "2026-12-12"   # exclusive upper bound for the Canvas planner query
+
 # Canvas course IDs — maps config course key → Canvas course ID
 # These are used for the per-course assignments API
 # If a course ID is unknown, the scraper will try to discover it from enrolled courses
 CANVAS_COURSE_IDS = {
-    "eecs270": "815882",
-    # Others will be auto-discovered from Canvas enrollment
+    # Fall 2026 IDs unknown — discover_canvas_course_ids() resolves them from
+    # Canvas enrollment at runtime. Pin one here only if discovery misses it.
 }
 
 GRADESCOPE_COURSES = {
-    "stats250": [
-        {"url_id": "1198964", "label": "STATS 250 EP/Labs/CS/Exams"},
-        {"url_id": "1198968", "label": "STATS 250 Lecture Activities"},
+    "eecs373": [
+        {"url_id": "1342020", "label": "EECS 373"},
     ],
-    "eecs370": [
-        {"url_id": "1199590", "label": "EECS 370"},
-    ],
-    "eecs442": [
-        {"url_id": "1169657", "label": "EECS 442"},
+    "eecs445": [
+        {"url_id": "1373988", "label": "EECS 445"},
     ],
 }
 
 # Course name → config key mapping for Canvas planner items
+# config course key → short id prefix. Shared by generate_canvas_id() and
+# generate_gradescope_id() so the same assignment gets the same id no matter
+# which source found it — otherwise the merge sees two items, not one.
+COURSE_PREFIX = {
+    "eecs367": "367",
+    "eecs373": "373",
+    "eecs445": "445",
+    "clciv371": "clciv",
+}
+
 CANVAS_COURSE_MAP = {
-    "eecs 270": "eecs270",
-    "eecs 370": "eecs370",
-    "eecs 442": "eecs442",
-    "stats 250": "stats250",
-    "tchnclcm 300": "tc300",
-    "tc 300": "tc300",
+    "eecs 367": "eecs367",
+    "rob 380": "eecs367",     # cross-listed as ROB 380
+    "eecs 373": "eecs373",
+    "eecs 445": "eecs445",
+    "clciv 371": "clciv371",
+    "clciv371": "clciv371",
 }
 
 TODAY = datetime.now().strftime("%Y-%m-%d")
@@ -508,9 +520,10 @@ def scrape_canvas_planner(driver):
         return []
 
     try:
-        items = driver.execute_script("""
+        items = driver.execute_script(f"""
             const resp = await fetch(
-                "/api/v1/planner/items?start_date=2026-01-01&end_date=2026-05-01&per_page=100"
+                "/api/v1/planner/items?start_date={TERM_START}"
+                + "&end_date={TERM_END}&per_page=100"
             );
             if (!resp.ok) return [];
             return await resp.json();
@@ -690,13 +703,12 @@ def scrape_all_canvas_courses(driver):
 def generate_canvas_id(course_key, name, item):
     """Generate a config-style ID for a Canvas assignment."""
     name_lower = name.lower()
-    prefix = {"eecs270": "270", "eecs370": "370", "eecs442": "442",
-              "stats250": "s250", "tc300": "tc"}[course_key]
+    prefix = COURSE_PREFIX.get(course_key, course_key)
 
-    if course_key == "tc300":
-        # TC 300: tc-{descriptive-slug}
+    if course_key == "clciv371":
+        # CLCIV 371: clciv-{descriptive-slug}
         slug = re.sub(r'[^a-z0-9]+', '-', name_lower).strip('-')[:30]
-        return f"tc-{slug}"
+        return f"clciv-{slug}"
 
     # Try to extract number patterns
     # Project N, HW N, Quiz N, Exam N, etc.
@@ -715,6 +727,11 @@ def generate_canvas_id(course_key, name, item):
     m = re.search(r'pre-?lab\s*(\d+)', name_lower)
     if m:
         return f"{prefix}-pl{m.group(1)}"
+
+    # must come after the pre-lab check — "pre-lab 3" also matches "lab 3"
+    m = re.search(r'lab\s*(\d+)', name_lower)
+    if m:
+        return f"{prefix}-lab{m.group(1)}"
 
     if "midterm" in name_lower:
         return f"{prefix}-midterm"
@@ -807,6 +824,9 @@ def fetch_canvas_ics():
 
 # ── Course website scraping ───────────────────────────────────────────
 
+# NOTE: the two scrapers below target Winter 2026 course sites and are no longer
+# called from main(). They are kept as working reference implementations for
+# writing a Fall 2026 scraper once EECS 373 / AutoRob publish their schedules.
 EECS270_URL = "https://www.eecs270.org/"
 EECS370_URL = "https://eecs370.github.io/"
 
@@ -1369,54 +1389,43 @@ def parse_gradescope_date(text):
 
 
 def generate_gradescope_id(course_key, name):
-    """Generate an ID for a Gradescope assignment following conventions."""
+    """Generate an ID for a Gradescope assignment following conventions.
+
+    Uses the same prefixes and patterns as generate_canvas_id() so an item that
+    appears in both Canvas and Gradescope collapses to one entry on merge.
+    """
     nl = name.lower().strip()
-    if course_key == "stats250":
-        # EP 01 → s250-ep01
-        m = re.search(r'ep\s*(\d+)', nl)
-        if m:
-            return f"s250-ep{int(m.group(1)):02d}"
-        # Lab N → s250-labN
-        m = re.search(r'lab\s*(\d+)', nl)
-        if m:
-            return f"s250-lab{m.group(1)}"
-        # Case Study N → s250-csN
-        m = re.search(r'case\s*study\s*(\d+)', nl)
-        if m:
-            return f"s250-cs{m.group(1)}"
-        # Exam N → s250-examN
-        m = re.search(r'exam\s*(\d+)', nl)
-        if m:
-            return f"s250-exam{m.group(1)}"
-        # Lecture NN PW/GW → s250-lNNpw / s250-lNNgw
-        m = re.search(r'lecture\s*(\d+)\s*(pw|gw)', nl)
-        if m:
-            return f"s250-l{int(m.group(1)):02d}{m.group(2)}"
+    prefix = COURSE_PREFIX.get(course_key, course_key)
 
-    elif course_key == "eecs370":
-        m = re.search(r'pre-?lab\s*(\d+)', nl)
-        if m:
-            return f"370-pl{m.group(1)}"
-        m = re.search(r'(?:hw|homework)\s*(\d+)', nl)
-        if m:
-            return f"370-hw{m.group(1)}"
-        m = re.search(r'project\s*(\d+)([a-z]?)', nl)
-        if m:
-            return f"370-p{m.group(1)}{m.group(2)}"
+    m = re.search(r'pre-?lab\s*(\d+)', nl)
+    if m:
+        return f"{prefix}-pl{m.group(1)}"
 
-    elif course_key == "eecs442":
-        m = re.search(r'(?:hw|homework)\s*(\d+)', nl)
-        if m:
-            return f"442-hw{m.group(1)}"
-        m = re.search(r'quiz\s*(\d+)', nl)
-        if m:
-            return f"442-q{m.group(1)}"
-        if "midterm" in nl:
-            return "442-midterm"
+    m = re.search(r'lab\s*(\d+)', nl)
+    if m:
+        return f"{prefix}-lab{m.group(1)}"
 
-    # Fallback
-    prefix = {"eecs270": "270", "eecs370": "370", "eecs442": "442",
-              "stats250": "s250", "tc300": "tc"}.get(course_key, course_key)
+    m = re.search(r'(?:hw|homework)\s*(\d+)', nl)
+    if m:
+        return f"{prefix}-hw{m.group(1)}"
+
+    m = re.search(r'project\s*(\d+)([a-z]?)', nl)
+    if m:
+        return f"{prefix}-p{m.group(1)}{m.group(2)}"
+
+    m = re.search(r'quiz\s*(\d+)', nl)
+    if m:
+        return f"{prefix}-q{m.group(1)}"
+
+    if "midterm" in nl:
+        return f"{prefix}-midterm"
+    if "final" in nl and "exam" in nl:
+        return f"{prefix}-final"
+    m = re.search(r'exam\s*(\d+)', nl)
+    if m:
+        return f"{prefix}-exam{m.group(1)}"
+
+    # Fallback: descriptive slug
     slug = re.sub(r'[^a-z0-9]+', '-', nl).strip('-')[:25]
     return f"{prefix}-{slug}"
 
@@ -1432,13 +1441,6 @@ def guess_gradescope_type(course_key, name):
         return "prelab"
     if "lab" in nl:
         return "lab"
-    if course_key == "stats250":
-        if re.search(r'\bep\b', nl):
-            return "ep"
-        if "case study" in nl:
-            return "casestudy"
-        if "lecture" in nl:
-            return "lecture"
     if "homework" in nl or nl.startswith("hw"):
         return "homework"
     if "project" in nl:
@@ -1687,25 +1689,15 @@ def main():
 
         # 5. EECS 270 course website
         if not args.skip_websites and driver:
-            _step_header(5, "EECS 270 website (eecs270.org)")
-            with Spinner("Scraping eecs270.org…"):
-                eecs270_items = scrape_eecs270_website(driver)
-            all_new.extend(eecs270_items)
-            _ok(f"{len(eecs270_items)} assignments from eecs270.org")
+            _step_header(5, "Course websites")
+            _info("No Fall 2026 course-website scraper is wired up yet")
+            _info("EECS 373 site posts no dates; autorob.org still shows Winter 2025")
+            _info("Deadlines come from Canvas + Gradescope until those sites fill in")
         else:
-            _step_header(5, "EECS 270 website")
+            _step_header(5, "Course websites")
             _info("Skipped (--skip-websites)")
 
-        # 6. EECS 370 course website
-        if not args.skip_websites and driver:
-            _step_header(6, "EECS 370 website (eecs370.github.io)")
-            with Spinner("Scraping eecs370.github.io…"):
-                eecs370_items = scrape_eecs370_website(driver)
-            all_new.extend(eecs370_items)
-            _ok(f"{len(eecs370_items)} assignments from eecs370.github.io")
-        else:
-            _step_header(6, "EECS 370 website")
-            _info("Skipped (--skip-websites)")
+        # 6. (reserved for a Fall 2026 course-website scraper)
 
         # 7. Gradescope
         if not args.skip_gradescope and driver:

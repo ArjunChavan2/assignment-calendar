@@ -71,8 +71,32 @@ That marker is the handle for the whole set. To find or remove every synced
 event, search Google Calendar for `Synced from assignment-calendar` — class
 events and personal events do not carry it.
 
+## Term rollover
+
+`scrape_assignments.py` keys the term off four constants near the top:
+
+```python
+TERM_NAME  = "Fall 2026"
+TERM_START = "2026-08-31"
+TERM_END   = "2026-12-12"   # exclusive upper bound for the Canvas planner query
+```
+
+Each new term: update those, replace `courses` in `config.js`, empty
+`assignments`/`autoCompleted`, and refresh `CANVAS_COURSE_MAP`,
+`GRADESCOPE_COURSES`, and the prefix map in `generate_canvas_id()`.
+Canvas course IDs auto-discover from enrollment, so `CANVAS_COURSE_IDS` can
+stay empty.
+
+Class meetings are **not** generated from `config.js` — they are recurring
+Google Calendar events created by hand from the Wolverine Access schedule.
+
 ## History
 
 The Winter 2026 term (176 deadlines) was synced to the calendar on 2026-08-30 and
 removed the same day at the user's request — it was a finished term and added only
 clutter. Removing it is why the exporter now defaults to future-only.
+
+On 2026-08-31 the project was retargeted to Fall 2026 (EECS 367, EECS 373,
+EECS 445, CLCIV 371). The Winter config was saved to `backups/`. The Winter
+course-website scrapers (`scrape_eecs270_website`, `scrape_eecs370_website`)
+are no longer called but kept as reference implementations.
