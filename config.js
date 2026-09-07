@@ -88,6 +88,47 @@ const APP_CONFIG = {
       "canvasCourseId": null
     }
   },
-  "assignments": [],
+  "assignments": [
+    {
+      "id": "clciv-when-to-read-by",
+      "name": "When to read by",
+      "course": "clciv371",
+      "due": "2026-09-02",
+      "time": "10:39 AM",
+      "type": "assignment",
+      "points": "—",
+      "hours": 1
+    },
+    {
+      "id": "clciv-readings-for-section-tomorrow",
+      "name": "Readings for Section Tomorrow ",
+      "course": "clciv371",
+      "due": "2026-09-02",
+      "time": "2:19 PM",
+      "type": "assignment",
+      "points": "—",
+      "hours": 1
+    },
+    {
+      "id": "clciv-first-discussion-post",
+      "name": "First Discussion Post ",
+      "course": "clciv371",
+      "due": "2026-09-06",
+      "time": "1:23 PM",
+      "type": "assignment",
+      "points": "—",
+      "hours": 1
+    },
+    {
+      "id": "clciv-week-2-the-rise-of-the-polis",
+      "name": "Week 2: The Rise of the Polis ",
+      "course": "clciv371",
+      "due": "2026-09-10",
+      "time": "12:59 PM",
+      "type": "assignment",
+      "points": "100",
+      "hours": 1
+    }
+  ],
   "autoCompleted": []
 };

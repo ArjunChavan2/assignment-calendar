@@ -26,4 +26,26 @@ DTSTART:19701101T020000
 RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
 END:STANDARD
 END:VTIMEZONE
+BEGIN:VEVENT
+UID:assignment-clciv-week-2-the-rise-of-the-polis@assignment-calendar
+DTSTAMP:20260907T033659Z
+DTSTART;TZID=America/Detroit:20260910T122900
+DTEND;TZID=America/Detroit:20260910T125900
+SUMMARY:CLCIV 371: Week 2: The Rise of the Polis 
+DESCRIPTION:CLCIV 371 — Assignment\nPoints: 100\nEstimated work: 1h\nCour
+ se site: https://umich.instructure.com/\n\nSynced from assignment-calendar
+  [clciv-week-2-the-rise-of-the-polis]
+TRANSP:TRANSPARENT
+CATEGORIES:clciv371,assignment
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:CLCIV 371: Week 2: The Rise of the Polis 
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:CLCIV 371: Week 2: The Rise of the Polis 
+TRIGGER:-PT120M
+END:VALARM
+END:VEVENT
 END:VCALENDAR

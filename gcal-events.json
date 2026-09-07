@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "uid": "assignment-clciv-week-2-the-rise-of-the-polis@assignment-calendar",
+    "syncId": "clciv-week-2-the-rise-of-the-polis",
+    "summary": "CLCIV 371: Week 2: The Rise of the Polis ",
+    "description": "CLCIV 371 — Assignment\nPoints: 100\nEstimated work: 1h\nCourse site: https://umich.instructure.com/\n\nSynced from assignment-calendar [clciv-week-2-the-rise-of-the-polis]",
+    "colorId": "3",
+    "course": "clciv371",
+    "type": "assignment",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-09-10T12:29:00-04:00",
+    "end": "2026-09-10T12:59:00-04:00",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 120
+      }
+    ]
+  }
+]

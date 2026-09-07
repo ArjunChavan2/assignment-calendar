@@ -457,6 +457,17 @@ def parse_canvas_items(items):
 
 def discover_canvas_course_ids(driver):
     """Fetch enrolled Canvas courses and map them to our config keys."""
+    # The browser is left on accounts.google.com after the Google-account check —
+    # a relative fetch() there resolves against the wrong origin and silently
+    # returns nothing, so every course looks undiscoverable. Navigate to Canvas
+    # (and confirm login) first.
+    logged_in = wait_for_login(
+        driver, CANVAS_BASE,
+        lambda d: "login" not in d.current_url.lower(),
+        "Canvas"
+    )
+    if not logged_in:
+        return {}
     try:
         courses = driver.execute_script("""
             const all = [];
