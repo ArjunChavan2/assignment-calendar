@@ -124,6 +124,12 @@
   }
   header h1 { font-size: 1.25rem; font-weight: 700; }
   header .subtitle { color: var(--gray); font-size: 0.8rem; margin-top: 2px; }
+.gcal-links {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+.gcal-links a { color: inherit; }
   .controls {
     display: flex;
     gap: 8px;
@@ -387,6 +393,17 @@
   .study-plan-step.sp-today { background: #fefce8; border-radius: 4px; padding: 2px; }
   [data-theme="dark"] .study-plan-step.sp-today { background: #422006; }
   .study-plan-note { font-size: 0.7rem; color: var(--gray); margin-top: 6px; font-style: italic; }
+  .ask-claude-prompt {
+    display: flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 8px;
+    background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 6px;
+    cursor: pointer; user-select: none; transition: background 0.15s;
+  }
+  .ask-claude-prompt:hover { background: #ede9fe; }
+  [data-theme="dark"] .ask-claude-prompt { background: #2e1f5e; border-color: #7c3aed; }
+  [data-theme="dark"] .ask-claude-prompt:hover { background: #3b2470; }
+  .ask-claude-icon { font-size: 13px; color: #7c3aed; flex-shrink: 0; }
+  .ask-claude-text { font-size: 0.7rem; color: #7c3aed; flex: 1; line-height: 1.3; }
+  [data-theme="dark"] .ask-claude-text { color: #a78bfa; }
 
   /* Edit modal */
   .edit-modal {
@@ -585,6 +602,197 @@
   @keyframes panic-glow {
     0%, 100% { box-shadow: 0 0 4px rgba(220,38,38,0.3); }
     50% { box-shadow: 0 0 12px rgba(220,38,38,0.6); }
+  }
+
+  /* Work session chips on calendar */
+  .work-chip {
+    font-size: 0.58rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin: 1px 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    line-height: 1.25;
+    opacity: 0.72;
+    cursor: default;
+    border-left: 2px solid currentColor;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .work-chip .wc-hours {
+    flex-shrink: 0;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-left: auto;
+    padding-left: 3px;
+  }
+  .work-chip.wc-today {
+    opacity: 1;
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px currentColor;
+  }
+  /* Work plan toggle button */
+  #workPlanToggle.active {
+    background: #7c3aed;
+    color: #fff;
+    border-color: #7c3aed;
+  }
+  [data-theme="dark"] #workPlanToggle.active {
+    background: #6d28d9;
+    border-color: #6d28d9;
+  }
+  /* Spec-driven plan badge */
+  .custom-plan-badge {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: #ede9fe;
+    color: #7c3aed;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  [data-theme="dark"] .custom-plan-badge {
+    background: #2e1f5e;
+    color: #a78bfa;
+  }
+
+  /* Anti-procrastination: suggested start chips on calendar */
+  .start-chip {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin: 1px 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    line-height: 1.25;
+    word-break: break-word;
+    border: 1.5px dashed;
+    opacity: 0.75;
+    cursor: default;
+  }
+  .start-chip .start-icon {
+    font-weight: 700;
+    font-size: 0.55rem;
+    flex-shrink: 0;
+  }
+
+  /* Nudge badge on assignment chips past their start date */
+  .nudge-badge {
+    font-size: 0.5rem;
+    font-weight: 800;
+    padding: 0px 3px;
+    border-radius: 2px;
+    background: #fbbf24;
+    color: #78350f;
+    white-space: nowrap;
+    line-height: 1.3;
+    flex-shrink: 0;
+    animation: nudge-pulse 2s infinite;
+  }
+  [data-theme="dark"] .nudge-badge {
+    background: #92400e;
+    color: #fde68a;
+  }
+  @keyframes nudge-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Procrastination score card */
+  .pace-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .pace-card.pace-ahead {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+  }
+  .pace-card.pace-ok {
+    background: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+  }
+  .pace-card.pace-behind {
+    background: #fecaca;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+  }
+  [data-theme="dark"] .pace-card.pace-ahead {
+    background: #064e3b;
+    color: #6ee7b7;
+    border-color: #065f46;
+  }
+  [data-theme="dark"] .pace-card.pace-ok {
+    background: #422006;
+    color: #fde68a;
+    border-color: #713f12;
+  }
+  [data-theme="dark"] .pace-card.pace-behind {
+    background: #4c1d1d;
+    color: #fca5a5;
+    border-color: #7f1d1d;
+  }
+  .pace-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .pace-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s;
+  }
+  .pace-card.pace-ahead .pace-bar { background: #16a34a; }
+  .pace-card.pace-ok .pace-bar { background: #eab308; }
+  .pace-card.pace-behind .pace-bar { background: #dc2626; }
+
+  /* Daily view: start-now nudge section */
+  .daily-nudge-card {
+    background: #fffbeb;
+    border: 1.5px solid #f59e0b;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  [data-theme="dark"] .daily-nudge-card {
+    background: #422006;
+    border-color: #b45309;
+  }
+  .daily-nudge-card .nudge-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .daily-nudge-card .nudge-text {
+    flex: 1;
+  }
+  .daily-nudge-card .nudge-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .daily-nudge-card .nudge-detail {
+    font-size: 0.75rem;
+    color: #92400e;
+    margin-top: 2px;
+  }
+  [data-theme="dark"] .daily-nudge-card .nudge-detail {
+    color: #fbbf24;
   }
 
   /* Hours badge in list view */
@@ -806,6 +1014,12 @@
   <div>
     <h1 id="appTitle">Assignment Calendar</h1>
     <div class="subtitle" id="appSubtitle"></div>
+    <div class="gcal-links">
+      Now on Google Calendar &mdash;
+      <a href="https://calendar.google.com/calendar/r" target="_blank" rel="noopener">open School Schedule</a>
+      &middot;
+      <a href="calendar.ics" download>subscribe to the feed</a>
+    </div>
   </div>
   <div class="controls">
     <div class="legend" id="legendContainer"></div>
@@ -821,6 +1035,7 @@
     <button id="dailyToggle" onclick="switchToDaily()">Daily</button>
     <button class="add-btn-always" onclick="openAddModal()" title="Add assignment">+ Add</button>
     <button class="export-btn" onclick="exportConfig()" title="Export config.js">&#8681; Export</button>
+    <button class="edit-mode-btn" id="workPlanToggle" onclick="toggleWorkPlan()" title="Toggle daily work plan chips">&#128197; Plan</button>
     <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()" title="Toggle edit mode">&#9998; Edit</button>
     <button class="edit-mode-btn" onclick="openTagManager()" title="Manage tags">&#9873; Tags</button>
     <div style="display:flex;align-items:center;gap:4px;">
@@ -1016,6 +1231,11 @@ let viewMode = 'calendar';
 let doneMap = {};
 let filters = {};
 for (const id of Object.keys(courses)) filters[id] = true;
+
+// Work plan state
+let showWorkPlan = localStorage.getItem('show-work-plan') === 'true';
+let workPlans = {};
+try { workPlans = JSON.parse(localStorage.getItem('assignment-workplans-v1') || '{}'); } catch(e) {}
 
 // Edit mode state
 let editMode = false;
@@ -1456,6 +1676,238 @@ function checkDataAge() {
   }
 }
 
+// ========== WORK PLAN SYSTEM ==========
+function saveWorkPlan(id, plan) {
+  workPlans[id] = plan;
+  localStorage.setItem('assignment-workplans-v1', JSON.stringify(workPlans));
+}
+
+function toggleWorkPlan() {
+  showWorkPlan = !showWorkPlan;
+  localStorage.setItem('show-work-plan', showWorkPlan);
+  document.getElementById('workPlanToggle').classList.toggle('active', showWorkPlan);
+  render();
+}
+
+function getWorkSessions(assignment) {
+  if (doneMap[assignment.id]) return [];
+  const due = new Date(assignment.due + 'T23:59:00');
+  const today = new Date(todayStr + 'T00:00:00');
+  const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+  if (daysLeft < 0) return [];
+
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function ds(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+  const meta = { assignmentId: assignment.id, assignmentName: assignment.name, course: assignment.course };
+
+  // Custom spec-driven plan from config.workPlan or saved workPlans
+  const customPlan = assignment.workPlan || workPlans[assignment.id];
+  if (customPlan && customPlan.length > 0) {
+    return customPlan.map(entry => ({
+      ...meta,
+      dateStr: entry.date,
+      task: entry.task,
+      hours: entry.hours,
+      isCustom: true
+    })).filter(s => s.dateStr);
+  }
+
+  // Auto-generate by type
+  const totalHours = assignment.hours || (assignment.type === 'exam' ? 10 : 8);
+  const type = assignment.type;
+  let idealDays, phases;
+
+  if (type === 'exam') {
+    idealDays = Math.min(daysLeft, Math.max(3, Math.ceil(totalHours / 2)));
+    phases = [
+      { pct: 0.30, label: 'Review lecture notes & key concepts' },
+      { pct: 0.25, label: 'Work through practice problems' },
+      { pct: 0.25, label: 'Revisit homework solutions & past exams' },
+      { pct: 0.15, label: 'Focus on weak areas & tricky topics' },
+      { pct: 0.05, label: 'Light review & rest' },
+    ];
+  } else if (type === 'project') {
+    idealDays = Math.min(daysLeft, Math.max(5, Math.ceil(totalHours / 1.5)));
+    phases = [
+      { pct: 0.10, label: 'Read spec & understand requirements' },
+      { pct: 0.08, label: 'Plan approach & design' },
+      { pct: 0.45, label: 'Implement core functionality' },
+      { pct: 0.22, label: 'Edge cases & testing' },
+      { pct: 0.15, label: 'Final cleanup & submit' },
+    ];
+  } else if (type === 'homework' || type === 'casestudy') {
+    idealDays = Math.min(daysLeft, Math.max(2, Math.ceil(totalHours / 2)));
+    phases = [
+      { pct: 0.20, label: 'Read & understand the problems' },
+      { pct: 0.55, label: 'Work through problems' },
+      { pct: 0.25, label: 'Review & finalize answers' },
+    ];
+  } else {
+    // Short assignments: one session before due
+    const sessionDate = ds(addDays(today, Math.max(0, daysLeft - 1)));
+    return [{ ...meta, dateStr: sessionDate, task: `Complete: ${assignment.name}`, hours: totalHours }];
+  }
+
+  const startOffset = daysLeft - idealDays;
+  const sessions = [];
+  let dayIndex = 0;
+
+  for (const phase of phases) {
+    const phaseDays = Math.max(1, Math.round(idealDays * phase.pct));
+    const phaseHours = +(totalHours * phase.pct / phaseDays).toFixed(1);
+    for (let d = 0; d < phaseDays && dayIndex < idealDays; d++, dayIndex++) {
+      sessions.push({
+        ...meta,
+        dateStr: ds(addDays(today, startOffset + dayIndex)),
+        task: phase.label,
+        hours: phaseHours,
+      });
+    }
+  }
+  return sessions;
+}
+
+function getWorkSessionsForDate(dateStr) {
+  if (!showWorkPlan) return [];
+  const sessions = [];
+  for (const a of currentAssignments) {
+    if (doneMap[a.id]) continue;
+    if (!filters[a.course]) continue;
+    if (!passesTagFilter(a.id)) continue;
+    for (const s of getWorkSessions(a)) {
+      if (s.dateStr === dateStr) sessions.push(s);
+    }
+  }
+  return sessions;
+}
+
+// ========== ANTI-PROCRASTINATION SYSTEM ==========
+function getSuggestedStartDate(assignment) {
+  const due = new Date(assignment.due + 'T23:59:00');
+  const hours = assignment.hours || 1;
+  const type = assignment.type;
+
+  let daysNeeded;
+  if (type === 'exam') {
+    daysNeeded = Math.max(3, Math.ceil(hours / 2));
+  } else if (type === 'project') {
+    daysNeeded = Math.max(5, Math.ceil(hours / 1.5));
+  } else if (type === 'homework' || type === 'casestudy') {
+    daysNeeded = Math.max(2, Math.ceil(hours / 2));
+  } else {
+    daysNeeded = Math.max(1, Math.ceil(hours / 2));
+  }
+
+  const startDate = new Date(due);
+  startDate.setDate(startDate.getDate() - daysNeeded);
+  const y = startDate.getFullYear();
+  const m = String(startDate.getMonth() + 1).padStart(2, '0');
+  const d = String(startDate.getDate()).padStart(2, '0');
+  return { dateStr: `${y}-${m}-${d}`, daysNeeded };
+}
+
+function getStartChipsForDate(dateStr) {
+  const chips = [];
+  for (const a of currentAssignments) {
+    if (doneMap[a.id]) continue;
+    if (!filters[a.course]) continue;
+    if (!passesTagFilter(a.id)) continue;
+    if (a.due <= todayStr) continue;
+    const { dateStr: startStr } = getSuggestedStartDate(a);
+    if (startStr === dateStr && startStr !== a.due) {
+      chips.push(a);
+    }
+  }
+  return chips;
+}
+
+function getNudgeAssignments() {
+  const nudges = [];
+  const today = new Date(todayStr + 'T12:00:00');
+  for (const a of currentAssignments) {
+    if (doneMap[a.id]) continue;
+    if (!filters[a.course]) continue;
+    const due = new Date(a.due + 'T12:00:00');
+    if (due <= today) continue;
+    const { dateStr: startStr, daysNeeded } = getSuggestedStartDate(a);
+    const startDate = new Date(startStr + 'T12:00:00');
+    if (startDate <= today) {
+      const daysOverdue = Math.round((today - startDate) / (1000 * 60 * 60 * 24));
+      const daysUntilDue = Math.round((due - today) / (1000 * 60 * 60 * 24));
+      nudges.push({ assignment: a, daysOverdue, daysUntilDue, daysNeeded });
+    }
+  }
+  nudges.sort((a, b) => b.daysOverdue - a.daysOverdue || a.daysUntilDue - b.daysUntilDue);
+  return nudges;
+}
+
+function shouldShowNudge(assignment) {
+  if (doneMap[assignment.id]) return false;
+  const due = new Date(assignment.due + 'T12:00:00');
+  const today = new Date(todayStr + 'T12:00:00');
+  if (due <= today) return false;
+  const { dateStr: startStr } = getSuggestedStartDate(assignment);
+  const startDate = new Date(startStr + 'T12:00:00');
+  return startDate <= today;
+}
+
+function getPaceScore() {
+  const today = new Date(todayStr + 'T12:00:00');
+  let totalAssignments = 0;
+  let onPace = 0;
+  let ahead = 0;
+  let behind = 0;
+
+  for (const a of currentAssignments) {
+    if (!filters[a.course]) continue;
+    const due = new Date(a.due + 'T12:00:00');
+    if (due <= today && !doneMap[a.id]) continue;
+    if (due <= today && doneMap[a.id]) continue;
+
+    const { dateStr: startStr } = getSuggestedStartDate(a);
+    const startDate = new Date(startStr + 'T12:00:00');
+
+    if (startDate > today) continue;
+
+    totalAssignments++;
+    if (doneMap[a.id]) {
+      ahead++;
+    } else {
+      const daysUntilDue = Math.round((due - today) / (1000 * 60 * 60 * 24));
+      const { daysNeeded } = getSuggestedStartDate(a);
+      if (daysUntilDue >= daysNeeded * 0.5) {
+        onPace++;
+      } else {
+        behind++;
+      }
+    }
+  }
+  return { totalAssignments, ahead, onPace, behind };
+}
+
+function renderPaceCard() {
+  const pace = getPaceScore();
+  if (pace.totalAssignments === 0) return '';
+
+  const pct = Math.round(((pace.ahead + pace.onPace * 0.5) / pace.totalAssignments) * 100);
+  let cls, icon, label;
+  if (pace.behind === 0) {
+    cls = 'pace-ahead'; icon = '⚡'; label = `On track! ${pace.ahead} done early out of ${pace.totalAssignments} in your start window.`;
+  } else if (pace.behind <= pace.totalAssignments * 0.4) {
+    cls = 'pace-ok'; icon = '⏰'; label = `${pace.behind} assignment${pace.behind > 1 ? 's' : ''} should have been started — you can still catch up!`;
+  } else {
+    cls = 'pace-behind'; icon = '\u{1f6a8}'; label = `${pace.behind} of ${pace.totalAssignments} assignments are behind schedule — time to start!`;
+  }
+
+  return `<div class="pace-card ${cls}">
+    <span style="font-size:1.2rem">${icon}</span>
+    <span>${label}</span>
+    <div class="pace-bar-wrap"><div class="pace-bar" style="width:${pct}%"></div></div>
+    <span>${pct}%</span>
+  </div>`;
+}
+
 // ========== STUDY PLAN GENERATOR ==========
 function generateStudyPlan(assignment, today) {
   const type = assignment.type;
@@ -1594,6 +2046,17 @@ function generateStudyPlan(assignment, today) {
   return html;
 }
 
+// ========== SPEC-DRIVEN PLAN PROMPT ==========
+function makeAskClaudeBtn(assignment) {
+  const prompt = `Generate work plan for ${assignment.id} from ${assignment.specUrl}`;
+  const escaped = prompt.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return `<div class="ask-claude-prompt" onclick="navigator.clipboard.writeText('${escaped}').then(()=>{this.querySelector('.ask-claude-copied').style.opacity='1';setTimeout(()=>{this.querySelector('.ask-claude-copied').style.opacity='0'},1500)})" title="Click to copy prompt for Claude Code">
+    <span class="ask-claude-icon">✦</span>
+    <span class="ask-claude-text">Ask Claude to generate a detailed work plan from the spec</span>
+    <span class="ask-claude-copied" style="opacity:0;transition:opacity 0.2s;font-size:11px;color:#16a34a">Copied!</span>
+  </div>`;
+}
+
 // ========== TOOLTIP ==========
 let tooltipShowTimer = null;
 
@@ -1629,13 +2092,48 @@ function _renderTooltip(chip, assignment) {
   if (wl) html += `<div class="tooltip-row"><strong>Workload:</strong> <span class="priority-badge ${wl.cls}">${wl.label}</span></div>`;
   html += `<div class="tooltip-row"><strong>Status:</strong> ${doneMap[assignment.id] ? '\u2713 Done' : 'Pending'}</div>`;
 
+  if (!doneMap[assignment.id]) {
+    const startInfo = getSuggestedStartDate(assignment);
+    const startD = new Date(startInfo.dateStr + 'T12:00:00');
+    const startLabel = startD.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const todayD = new Date(todayStr + 'T12:00:00');
+    const isLate = startD <= todayD;
+    const hasCustom = !!(assignment.workPlan || workPlans[assignment.id]);
+    html += `<div class="tooltip-row"><strong>Start by:</strong> <span style="color:${isLate ? '#dc2626' : '#059669'};font-weight:600;">${startLabel}</span>${isLate ? ' (overdue!)' : ''} \u00b7 ~${startInfo.daysNeeded} days of work`;
+    if (hasCustom) html += ` <span class="custom-plan-badge">\u2605 Custom Plan</span>`;
+    html += `</div>`;
+  }
+
   if (platformUrl) {
     html += `<a href="${platformUrl}" target="_blank" class="tooltip-link">${linkLabel}</a>`;
   }
 
-  // Add study plan for exams and projects (only if not already done)
-  if (!doneMap[assignment.id]) {
+  if (!doneMap[assignment.id] && (assignment.specUrl || assignment.workPlan || workPlans[assignment.id])) {
+    const sessions = getWorkSessions(assignment).slice(0, 6);
+    if (sessions.length > 0) {
+      const hasCustom = !!(assignment.workPlan || workPlans[assignment.id]);
+      html += `<div class="study-plan"><div class="study-plan-header">${hasCustom ? '\u2605 Custom Work Plan' : 'Work Plan'}</div>`;
+      for (const s of sessions) {
+        const d = new Date(s.dateStr + 'T12:00:00');
+        const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+        const isToday = s.dateStr === todayStr;
+        const isPast = s.dateStr < todayStr;
+        html += `<div class="study-plan-step${isPast ? ' sp-past' : isToday ? ' sp-today' : ''}">`;
+        html += `<span class="sp-day">${label}</span>`;
+        html += `<span class="sp-task">${s.task}</span>`;
+        html += `<span class="sp-hours">${formatHours(s.hours)}</span>`;
+        html += `</div>`;
+      }
+      if (!assignment.workPlan && !workPlans[assignment.id] && assignment.specUrl) {
+        html += makeAskClaudeBtn(assignment);
+      }
+      html += `</div>`;
+    }
+  } else if (!doneMap[assignment.id]) {
     html += generateStudyPlan(assignment, todayStr);
+    if (assignment.specUrl) {
+      html += makeAskClaudeBtn(assignment);
+    }
   }
 
   tooltip.innerHTML = html;
@@ -1983,6 +2481,15 @@ function exportConfig() {
     if (doneMap[id] && !acIds.includes(id)) acIds.push(id);
   }
 
+  // Merge localStorage work plans into exported assignments
+  const exportAssignments = merged.map(a => {
+    const localPlan = workPlans[a.id];
+    if (localPlan && localPlan.length > 0 && !a.workPlan) {
+      return { ...a, workPlan: localPlan };
+    }
+    return a;
+  });
+
   let js = '// ============================================================\n';
   js += '// ASSIGNMENT CALENDAR — USER CONFIGURATION (exported)\n';
   js += '// ============================================================\n\n';
@@ -1993,7 +2500,7 @@ function exportConfig() {
   js += `  firebase: ${JSON.stringify(APP_CONFIG.firebase, null, 4).replace(/\n/g, '\n  ')},\n\n`;
   js += '  courses: ' + JSON.stringify(APP_CONFIG.courses, null, 4).replace(/\n/g, '\n  ') + ',\n\n';
   js += '  assignments: [\n';
-  for (const a of merged) {
+  for (const a of exportAssignments) {
     js += '    ' + JSON.stringify(a) + ',\n';
   }
   js += '  ],\n\n';
@@ -2076,13 +2583,40 @@ function renderCalendar() {
       html += `<div class="heat-bar heat-${dayMaxPriority}" title="${dayMaxPriority} priority day"></div>`;
     }
 
+    // Work session chips (only when Plan toggle is on)
+    const workSessions = getWorkSessionsForDate(dateStr);
+    for (const s of workSessions) {
+      const isToday = dateStr === todayStr;
+      const hasCustom = !!(assignments.find(a => a.id === s.assignmentId)?.workPlan || workPlans[s.assignmentId]);
+      html += `<div class="work-chip ${s.course}${isToday ? ' wc-today' : ''}" title="${s.task} \u2014 ${s.assignmentName} (${formatHours(s.hours)})" style="color:var(--${s.course});">`;
+      if (hasCustom) html += `<span style="flex-shrink:0;font-size:0.5rem">\u2605</span>`;
+      html += `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${s.task}</span>`;
+      html += `<span class="wc-hours">${formatHours(s.hours)}</span>`;
+      html += `</div>`;
+    }
+
+    // Suggested start chips (ghost chips for assignments that should start this day, only when Plan is OFF)
+    if (!showWorkPlan) {
+      const startChips = getStartChipsForDate(dateStr);
+      for (const a of startChips) {
+        html += `<div class="start-chip ${a.course}" title="Suggested start date for ${a.name} (due ${a.due})" style="border-color:var(--${a.course});">`;
+        html += `<span class="start-icon">\u25b8</span>`;
+        html += `<span>Start: ${a.name}</span>`;
+        html += `</div>`;
+      }
+    }
+
     for (const a of dayAssignments) {
       const isDone = doneMap[a.id];
       const chipClass = isDone ? 'done' : a.course;
       const isPanic = panicIds.has(a.id);
       const workload = !isDone ? getWorkloadBadge(a.hours) : null;
+      const showNudge = !isDone && shouldShowNudge(a);
       html += `<div class="assignment-chip ${chipClass}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseenter="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseleave="scheduleHideTooltip()" style="cursor:pointer;">`;
       html += `<span class="check">${isDone ? '\u2713' : ''}</span>`;
+      if (showNudge) {
+        html += `<span class="nudge-badge">START</span>`;
+      }
       if (workload) {
         html += `<span class="priority-badge ${workload.cls}">${workload.label}</span>`;
       }
@@ -2135,6 +2669,20 @@ function renderList() {
   `;
 
   let html = '';
+  html += renderPaceCard();
+
+  // "Should have started" section
+  const nudgeItems = getNudgeAssignments();
+  if (nudgeItems.length) {
+    html += `<div class="list-section"><h2 style="color:#b45309">&#9200; Should Have Started (${nudgeItems.length})</h2>`;
+    for (const n of nudgeItems) {
+      const a = n.assignment;
+      const startInfo = getSuggestedStartDate(a);
+      html += renderListItem(a, `Should have started ${n.daysOverdue} day${n.daysOverdue !== 1 ? 's' : ''} ago · ${n.daysUntilDue} day${n.daysUntilDue !== 1 ? 's' : ''} left · needs ~${startInfo.daysNeeded} days of work`);
+    }
+    html += `</div>`;
+  }
+
   if (overdue.length) {
     html += `<div class="list-section"><h2 class="overdue">Overdue (${overdue.length})</h2>`;
     for (const a of overdue.sort((a,b) => b.due.localeCompare(a.due))) html += renderListItem(a);
@@ -2153,7 +2701,7 @@ function renderList() {
   document.getElementById('listContent').innerHTML = html;
 }
 
-function renderListItem(a) {
+function renderListItem(a, nudgeMsg) {
   const isDone = doneMap[a.id];
   const isPanic = panicIds.has(a.id);
   const priority = getPriority(a, todayStr);
@@ -2161,12 +2709,15 @@ function renderListItem(a) {
     ? `<span class="priority-tag priority-${priority.level}">${priority.level.toUpperCase()}</span>`
     : '';
   const hoursHtml = a.hours ? `<span class="hours-badge"><strong>${formatHours(a.hours)}</strong> est.</span>` : '';
+  const nudgeHtml = nudgeMsg ? `<div class="meta" style="color:#b45309;font-weight:600;font-size:0.7rem;">\u23f0 ${nudgeMsg}</div>` : '';
+  const nudgeBadgeHtml = (!isDone && !nudgeMsg && shouldShowNudge(a)) ? '<span class="nudge-badge">START</span>' : '';
   return `
     <div class="list-item ${isDone ? 'done' : ''}${isPanic ? ' panic-item' : ''}" onclick="handleAssignmentClick(event, '${a.id}')" onmouseenter="showTooltip(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})" onmouseleave="scheduleHideTooltip()">
       <div class="checkbox">${isDone ? '\u2713' : ''}</div>
       <div class="info">
-        <div class="name">${a.name}</div>
+        <div class="name">${nudgeBadgeHtml} ${a.name}</div>
         <div class="meta">Due: ${formatDate(a.due, a.time)} \u00b7 ${a.type} \u00b7 ${a.points} pts</div>
+        ${nudgeHtml}
       </div>
       ${hoursHtml}
       ${priorityHtml}
@@ -2202,70 +2753,15 @@ function toggleDailyTask(key) {
 }
 
 function getTodayStudyTasks() {
+  // Delegate to getWorkSessions for each assignment, collect sessions scheduled for today
   const tasks = [];
-  const todayDate = new Date(todayStr + 'T00:00:00');
-
-  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-  function dateStr(d) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-
   for (const a of currentAssignments) {
-    if (a.type !== 'exam' && a.type !== 'project') continue;
     if (doneMap[a.id]) continue;
     if (!filters[a.course]) continue;
-
-    const dueDate = new Date(a.due + 'T23:59:00');
-    const daysLeft = Math.ceil((dueDate - todayDate) / (1000 * 60 * 60 * 24));
-    if (daysLeft < 0) continue;
-
-    const totalHours = a.hours || (a.type === 'exam' ? 10 : 8);
-
-    let phases, idealDays, startOffset;
-
-    if (a.type === 'exam') {
-      idealDays = Math.min(daysLeft, Math.max(3, Math.ceil(totalHours / 2)));
-      startOffset = daysLeft - idealDays;
-      phases = [
-        { pct: 0.30, label: 'Review lecture notes & key concepts' },
-        { pct: 0.25, label: 'Work through practice problems' },
-        { pct: 0.25, label: 'Revisit homework solutions & past exams' },
-        { pct: 0.15, label: 'Focus on weak areas & tricky topics' },
-        { pct: 0.05, label: 'Light review & rest before exam' },
-      ];
-    } else {
-      idealDays = Math.min(daysLeft, Math.max(8, Math.ceil(totalHours / 1.5)));
-      startOffset = daysLeft - idealDays;
-      phases = [
-        { pct: 0.08, label: 'Read spec thoroughly & understand requirements' },
-        { pct: 0.08, label: 'Plan approach & outline design' },
-        { pct: 0.38, label: 'Implement core functionality (3 submissions/day)' },
-        { pct: 0.18, label: 'Implement edge cases & remaining features' },
-        { pct: 0.18, label: 'Test, debug & fix issues' },
-        { pct: 0.10, label: 'Final review, clean up & submit' },
-      ];
-    }
-
-    const hoursPerDay = +(totalHours / idealDays).toFixed(1);
-    let dayIndex = 0;
-
-    for (const phase of phases) {
-      const phaseDays = Math.max(1, Math.round(idealDays * phase.pct));
-      const phaseHours = a.type === 'exam' ? hoursPerDay : +(totalHours * phase.pct / phaseDays).toFixed(1);
-      for (let d = 0; d < phaseDays && dayIndex < idealDays; d++, dayIndex++) {
-        const date = addDays(todayDate, startOffset + dayIndex);
-        const ds = dateStr(date);
-        if (ds === todayStr) {
-          tasks.push({
-            assignmentId: a.id,
-            assignmentName: a.name,
-            course: a.course,
-            task: phase.label,
-            hours: phaseHours,
-            dueDate: a.due,
-            type: a.type
-          });
-        }
+    if (!passesTagFilter(a.id)) continue;
+    for (const s of getWorkSessions(a)) {
+      if (s.dateStr === todayStr) {
+        tasks.push({ ...s, dueDate: a.due, type: a.type });
       }
     }
   }
@@ -2290,11 +2786,35 @@ function renderDaily() {
   html += `<div class="daily-subheader">${dateLabel}</div>`;
 
   // Summary cards
+  const nudges = getNudgeAssignments();
   html += `<div class="daily-summary">`;
   html += `<div class="daily-summary-card"><div class="ds-num" style="color:#2563eb">${dueCount}</div><div class="ds-label">Due Today</div></div>`;
   html += `<div class="daily-summary-card"><div class="ds-num" style="color:#7c3aed">${studyCount}</div><div class="ds-label">Study Tasks</div></div>`;
   html += `<div class="daily-summary-card"><div class="ds-num">${totalHours.toFixed(1)}h</div><div class="ds-label">Est. Work</div></div>`;
+  if (nudges.length > 0) {
+    html += `<div class="daily-summary-card"><div class="ds-num" style="color:#b45309">${nudges.length}</div><div class="ds-label">To Start</div></div>`;
+  }
   html += `</div>`;
+
+  // Start-now nudges
+  if (nudges.length > 0) {
+    html += `<div class="daily-section">`;
+    html += `<div class="daily-section-title"><span class="section-icon">&#9200;</span> Start These Now <span class="section-count">${nudges.length}</span></div>`;
+    for (const n of nudges) {
+      const a = n.assignment;
+      const urgency = n.daysOverdue >= n.daysNeeded * 0.5 ? 'Falling behind!' : 'Time to begin.';
+      html += `<div class="daily-nudge-card" onclick="toggleDone('${a.id}'); render();" style="cursor:pointer;">`;
+      html += `<div class="nudge-icon">⏰</div>`;
+      html += `<div class="nudge-text">`;
+      html += `<div class="nudge-name">${a.name}</div>`;
+      html += `<div class="nudge-detail">Due ${formatDate(a.due, a.time)} · ${n.daysUntilDue} day${n.daysUntilDue !== 1 ? 's' : ''} left · needs ~${n.daysNeeded} days · ${urgency}</div>`;
+      html += `</div>`;
+      if (a.hours) html += `<div class="daily-time-badge">${formatHours(a.hours)}</div>`;
+      html += `<span class="course-tag ${a.course}">${courseNames[a.course]}</span>`;
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
 
   // Due today section
   if (todayAssignments.length > 0) {
@@ -2343,7 +2863,7 @@ function renderDaily() {
   }
 
   // Empty state
-  if (todayAssignments.length === 0 && studyTasks.length === 0) {
+  if (todayAssignments.length === 0 && studyTasks.length === 0 && nudges.length === 0) {
     html += `<div class="daily-empty">`;
     html += `<div class="empty-icon">&#127881;</div>`;
     html += `Nothing scheduled for today! Enjoy your free time.`;
@@ -2392,6 +2912,11 @@ checkDataAge();
 renderTagFilterBar();
 render();
 initFirebase();
+
+// Restore work plan toggle state
+if (showWorkPlan) {
+  document.getElementById('workPlanToggle').classList.add('active');
+}
 </script>
 
 <!-- Edit Modal -->

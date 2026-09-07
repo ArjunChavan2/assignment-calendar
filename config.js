@@ -13,7 +13,7 @@ const APP_CONFIG = {
   subtitle: "EECS 367 · EECS 373 · EECS 445 · CLCIV 371 — Fall 2026",
 
   // When the assignment data was last scraped (shown in footer — auto-updated by scrape task)
-  scrapeDate: "August 31, 2026",
+  scrapeDate: "September 6, 2026",
 
   // ---- Firebase (each user needs their own project) ----
   // 1. Go to console.firebase.google.com

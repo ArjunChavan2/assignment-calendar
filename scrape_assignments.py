@@ -155,6 +155,16 @@ GRADESCOPE_COURSES = {
 # config course key → short id prefix. Shared by generate_canvas_id() and
 # generate_gradescope_id() so the same assignment gets the same id no matter
 # which source found it — otherwise the merge sees two items, not one.
+# The term's courses, in display order. Everything that needs to iterate over
+# courses derives from this — previously three separate hardcoded lists drifted
+# apart on the Fall 2026 rollover and silently skipped every Canvas course.
+COURSES = [
+    ("eecs367", "EECS 367"),
+    ("eecs373", "EECS 373"),
+    ("eecs445", "EECS 445"),
+    ("clciv371", "CLCIV 371"),
+]
+
 COURSE_PREFIX = {
     "eecs367": "367",
     "eecs373": "373",
@@ -267,11 +277,8 @@ def write_config(raw_text, assignments, auto_completed):
 
     # Build assignments block
     # Group assignments by course for comments
-    course_order = ["eecs270", "eecs370", "eecs442", "stats250", "tc300"]
-    course_labels = {
-        "eecs270": "EECS 270", "eecs370": "EECS 370", "eecs442": "EECS 442",
-        "stats250": "STATS 250", "tc300": "TCHNCLCM 300",
-    }
+    course_order = [k for k, _ in COURSES]
+    course_labels = dict(COURSES)
 
     lines = []
     for course_key in course_order:
@@ -549,10 +556,6 @@ def parse_canvas_items(items):
         if not course_key:
             continue  # skip courses we don't track
 
-        # Skip courses that use Gradescope instead of Canvas
-        if course_key in ("stats250", "eecs442"):
-            continue
-
         name = plannable.get("title", "Unknown")
         due_at = item.get("plannable_date") or plannable.get("due_at")
         if not due_at:
@@ -684,8 +687,7 @@ def scrape_all_canvas_courses(driver):
     course_ids = discover_canvas_course_ids(driver)
 
     all_assignments = []
-    # Only scrape these courses from Canvas; others use Gradescope
-    canvas_courses = ("eecs270", "eecs370", "tc300")
+    canvas_courses = tuple(k for k, _ in COURSES)
     for course_key in canvas_courses:
         cid = course_ids.get(course_key)
         if not cid:
