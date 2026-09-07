@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 // ============================================================
-// ASSIGNMENT CALENDAR — config.js Validator & Fixer
+// ASSIGNMENT CALENDAR — assignments.json Validator & Fixer
 // ============================================================
+// Validates assignments.json against the courses/term defined in
+// courses.json — so a term rollover only requires editing courses.json;
+// there's nothing left here to drift out of sync.
+//
 // Run:  node validate-config.js           → report only
 //       node validate-config.js --fix     → auto-fix and write
 //       node validate-config.js --dry-run → show fixes without writing
@@ -10,12 +14,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const CONFIG_PATH = path.join(__dirname, 'config.js');
+const COURSES_PATH = path.join(__dirname, 'courses.json');
+const ASSIGNMENTS_PATH = path.join(__dirname, 'assignments.json');
 const BACKUP_DIR = path.join(__dirname, 'backups');
 
-// ---- Known-good reference data ----
-const VALID_COURSES = ['eecs270', 'eecs370', 'eecs442', 'stats250', 'tc300'];
-const VALID_ID_PREFIXES = ['270', '370', '442', 's250', 'tc'];
 const VALID_TYPES = [
   'project', 'quiz', 'exam', 'homework', 'prelab',
   'ep', 'lab', 'casestudy', 'lecture', 'assignment'
@@ -44,23 +46,35 @@ const JUNK_KEYWORDS = [
   'update:',
 ];
 
-// ---- Parse config ----
-function loadConfig() {
-  const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
+// ---- Load ----
+function loadCourses() {
   try {
-    const fn = new Function(raw + '; return APP_CONFIG;');
-    return { config: fn(), raw };
+    return JSON.parse(fs.readFileSync(COURSES_PATH, 'utf8'));
   } catch (e) {
-    console.error('\x1b[31m✗ SYNTAX ERROR in config.js:\x1b[0m', e.message);
+    console.error('\x1b[31m✗ SYNTAX ERROR in courses.json:\x1b[0m', e.message);
+    process.exit(1);
+  }
+}
+
+function loadAssignments() {
+  try {
+    return JSON.parse(fs.readFileSync(ASSIGNMENTS_PATH, 'utf8'));
+  } catch (e) {
+    console.error('\x1b[31m✗ SYNTAX ERROR in assignments.json:\x1b[0m', e.message);
     process.exit(1);
   }
 }
 
 // ---- Validation checks ----
-function validate(config) {
+function validate(courseData, data) {
   const issues = [];
-  const assignments = config.assignments || [];
-  const autoCompleted = config.autoCompleted || [];
+  const assignments = data.assignments || [];
+  const autoCompleted = data.autoCompleted || [];
+  const validCourses = Object.keys(courseData.courses || {});
+  const idPrefixes = {};
+  for (const [key, c] of Object.entries(courseData.courses || {})) {
+    idPrefixes[key] = c.idPrefix;
+  }
 
   // Track IDs for duplicate detection
   const seenIds = new Map(); // id → index
@@ -77,8 +91,8 @@ function validate(config) {
     if (!a.type) issues.push({ severity: 'error', idx: i, msg: `${loc}: missing type` });
 
     // 2. Valid course
-    if (a.course && !VALID_COURSES.includes(a.course)) {
-      issues.push({ severity: 'error', idx: i, msg: `${loc}: unknown course "${a.course}"` });
+    if (a.course && !validCourses.includes(a.course)) {
+      issues.push({ severity: 'error', idx: i, msg: `${loc}: unknown course "${a.course}" — not in courses.json` });
     }
 
     // 3. Valid type
@@ -87,14 +101,10 @@ function validate(config) {
     }
 
     // 4. ID prefix matches course
-    if (a.id && a.course) {
+    if (a.id && a.course && idPrefixes[a.course]) {
       const prefix = a.id.split('-')[0];
-      const expectedPrefixes = {
-        eecs270: '270', eecs370: '370', eecs442: '442',
-        stats250: 's250', tc300: 'tc'
-      };
-      if (expectedPrefixes[a.course] && prefix !== expectedPrefixes[a.course]) {
-        issues.push({ severity: 'warn', idx: i, msg: `${loc}: id prefix "${prefix}" doesn't match course "${a.course}" (expected "${expectedPrefixes[a.course]}")` });
+      if (prefix !== idPrefixes[a.course]) {
+        issues.push({ severity: 'warn', idx: i, msg: `${loc}: id prefix "${prefix}" doesn't match course "${a.course}" (expected "${idPrefixes[a.course]}")` });
       }
     }
 
@@ -144,11 +154,13 @@ function validate(config) {
       issues.push({ severity: 'error', idx: i, msg: `${loc}: invalid date format "${a.due}" (expected YYYY-MM-DD)` });
     }
 
-    // 10. Date sanity check (should be within W2026 semester: Jan 2026 – Apr 2026)
-    if (a.due && /^\d{4}-\d{2}-\d{2}$/.test(a.due)) {
+    // 10. Date sanity check (should be within the current term, from courses.json)
+    if (a.due && /^\d{4}-\d{2}-\d{2}$/.test(a.due) && courseData.termStart && courseData.termEnd) {
       const d = new Date(a.due + 'T12:00:00');
-      if (d < new Date('2026-01-01') || d > new Date('2026-05-15')) {
-        issues.push({ severity: 'warn', idx: i, msg: `${loc}: date "${a.due}" is outside the Winter 2026 semester range` });
+      const termStart = new Date(courseData.termStart + 'T00:00:00');
+      const termEnd = new Date(courseData.termEnd + 'T23:59:59');
+      if (d < termStart || d > termEnd) {
+        issues.push({ severity: 'warn', idx: i, msg: `${loc}: date "${a.due}" is outside the ${courseData.term || 'current'} term range (${courseData.termStart}–${courseData.termEnd})` });
       }
     }
 
@@ -182,7 +194,7 @@ function validate(config) {
 }
 
 // ---- Auto-fix ----
-function autoFix(config, issues) {
+function autoFix(data, issues) {
   const toRemoveIdxs = new Set();
   const staleACIds = new Set();
   let fixed = 0;
@@ -208,23 +220,20 @@ function autoFix(config, issues) {
   }
 
   // Remove flagged assignments (in reverse order to preserve indices)
-  const removedIds = new Set();
   const sortedIdxs = [...toRemoveIdxs].sort((a, b) => b - a);
   for (const idx of sortedIdxs) {
-    const removed = config.assignments[idx];
-    removedIds.add(removed.id);
+    const removed = data.assignments[idx];
     console.log(`  \x1b[33m→ Removing:\x1b[0m ${removed.id} ("${removed.name}")`);
-    config.assignments.splice(idx, 1);
+    data.assignments.splice(idx, 1);
   }
 
   // Clean autoCompleted: remove stale refs and deduplicate
-  // Only remove an ID if it's truly gone (not just a duplicate that was removed while the original remains)
-  const remainingIds = new Set(config.assignments.map(a => a.id));
-  const beforeAC = config.autoCompleted.length;
-  config.autoCompleted = [...new Set(
-    config.autoCompleted.filter(id => !staleACIds.has(id) && remainingIds.has(id))
+  const remainingIds = new Set(data.assignments.map(a => a.id));
+  const beforeAC = data.autoCompleted.length;
+  data.autoCompleted = [...new Set(
+    data.autoCompleted.filter(id => !staleACIds.has(id) && remainingIds.has(id))
   )];
-  const removedAC = beforeAC - config.autoCompleted.length;
+  const removedAC = beforeAC - data.autoCompleted.length;
   if (removedAC > 0) {
     console.log(`  \x1b[33m→ Removed ${removedAC} stale/duplicate autoCompleted entries\x1b[0m`);
   }
@@ -232,78 +241,18 @@ function autoFix(config, issues) {
   return fixed;
 }
 
-// ---- Write config back ----
-function writeConfig(config, raw) {
+// ---- Write assignments.json back ----
+function writeAssignments(data) {
   // Create backup first
   if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const backupPath = path.join(BACKUP_DIR, `config-${timestamp}.js`);
-  fs.writeFileSync(backupPath, raw);
+  const backupPath = path.join(BACKUP_DIR, `assignments-${timestamp}.json`);
+  fs.copyFileSync(ASSIGNMENTS_PATH, backupPath);
   console.log(`\n  \x1b[36mBackup saved:\x1b[0m ${backupPath}`);
 
-  // Rebuild config.js by replacing the assignments array and autoCompleted array in the raw text
-  let output = raw;
-
-  // Replace assignments array
-  const assignmentsStr = config.assignments.map(a => {
-    const fields = [];
-    fields.push(`      id: ${JSON.stringify(a.id)}`);
-    fields.push(`      name: ${JSON.stringify(a.name)}`);
-    fields.push(`      course: ${JSON.stringify(a.course)}`);
-    fields.push(`      due: ${JSON.stringify(a.due)}`);
-    fields.push(`      time: ${a.time ? JSON.stringify(a.time) : 'null'}`);
-    fields.push(`      type: ${JSON.stringify(a.type)}`);
-    fields.push(`      points: ${JSON.stringify(a.points)}`);
-    fields.push(`      hours: ${a.hours}`);
-    if (a.specUrl) fields.push(`      specUrl: ${JSON.stringify(a.specUrl)}`);
-    return `    {\n${fields.join(',\n')}\n    }`;
-  }).join(',\n');
-
-  // Find and replace the assignments array
-  const assignStart = output.indexOf('assignments: [');
-  if (assignStart === -1) {
-    console.error('\x1b[31m✗ Could not locate assignments array in config.js\x1b[0m');
-    process.exit(1);
-  }
-  // Find the matching closing bracket
-  let depth = 0;
-  let assignEnd = -1;
-  for (let i = assignStart + 'assignments: '.length; i < output.length; i++) {
-    if (output[i] === '[') depth++;
-    if (output[i] === ']') {
-      depth--;
-      if (depth === 0) { assignEnd = i + 1; break; }
-    }
-  }
-  output = output.slice(0, assignStart) + `assignments: [\n${assignmentsStr}\n  ]` + output.slice(assignEnd);
-
-  // Replace autoCompleted array
-  const acStr = config.autoCompleted.map(id => `    ${JSON.stringify(id)}`).join(',\n');
-  const acStart = output.indexOf('autoCompleted: [');
-  if (acStart !== -1) {
-    let depth2 = 0;
-    let acEnd = -1;
-    for (let i = acStart + 'autoCompleted: '.length; i < output.length; i++) {
-      if (output[i] === '[') depth2++;
-      if (output[i] === ']') {
-        depth2--;
-        if (depth2 === 0) { acEnd = i + 1; break; }
-      }
-    }
-    output = output.slice(0, acStart) + `autoCompleted: [\n${acStr}\n  ]` + output.slice(acEnd);
-  }
-
-  // Verify syntax before writing
-  try {
-    new Function(output);
-  } catch (e) {
-    console.error('\x1b[31m✗ Generated config has syntax errors — aborting write!\x1b[0m');
-    console.error('  ', e.message);
-    process.exit(1);
-  }
-
-  fs.writeFileSync(CONFIG_PATH, output);
-  console.log(`  \x1b[32m✓ config.js updated successfully\x1b[0m`);
+  fs.writeFileSync(ASSIGNMENTS_PATH, JSON.stringify(data, null, 2) + '\n');
+  console.log(`  \x1b[32m✓ assignments.json updated successfully\x1b[0m`);
+  console.log(`  \x1b[36m→ Run 'node build-config.js' to regenerate config.js\x1b[0m`);
 }
 
 // ---- Reporting ----
@@ -313,7 +262,7 @@ function printReport(issues) {
   const infos = issues.filter(i => i.severity === 'info');
 
   if (issues.length === 0) {
-    console.log('\n\x1b[32m✓ config.js is clean — no issues found!\x1b[0m\n');
+    console.log('\n\x1b[32m✓ assignments.json is clean — no issues found!\x1b[0m\n');
     return;
   }
 
@@ -348,29 +297,30 @@ function main() {
   const dryRun = args.includes('--dry-run');
 
   console.log('\n\x1b[1m🔍 Assignment Calendar — Config Validator\x1b[0m');
-  console.log(`   File: ${CONFIG_PATH}\n`);
+  console.log(`   Files: ${COURSES_PATH}, ${ASSIGNMENTS_PATH}\n`);
 
-  const { config, raw } = loadConfig();
-  console.log(`   ${config.assignments.length} assignments, ${config.autoCompleted.length} autoCompleted entries`);
+  const courseData = loadCourses();
+  const data = loadAssignments();
+  console.log(`   ${data.assignments.length} assignments, ${data.autoCompleted.length} autoCompleted entries — term: ${courseData.term}`);
 
-  const issues = validate(config);
+  const issues = validate(courseData, data);
   printReport(issues);
 
   if ((doFix || dryRun) && issues.some(i => i.fixable)) {
     console.log(`\n\x1b[1m${dryRun ? '── Dry Run ──' : '── Applying Fixes ──'}\x1b[0m\n`);
-    const fixCount = autoFix(config, issues);
+    const fixCount = autoFix(data, issues);
     console.log(`\n  ${fixCount} fix(es) applied.`);
-    console.log(`  ${config.assignments.length} assignments remaining, ${config.autoCompleted.length} autoCompleted entries`);
+    console.log(`  ${data.assignments.length} assignments remaining, ${data.autoCompleted.length} autoCompleted entries`);
 
     if (!dryRun) {
-      writeConfig(config, raw);
+      writeAssignments(data);
     } else {
       console.log('\n  \x1b[36m(Dry run — no files were modified)\x1b[0m');
     }
 
     // Re-validate after fix
     console.log('\n\x1b[1m── Post-fix Validation ──\x1b[0m');
-    const postIssues = validate(config);
+    const postIssues = validate(courseData, data);
     printReport(postIssues);
   }
 

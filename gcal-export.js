@@ -2,7 +2,8 @@
 // ============================================================
 // GOOGLE CALENDAR EXPORT
 // ============================================================
-// Turns APP_CONFIG.assignments in config.js into calendar events.
+// Turns assignments.json (+ course metadata from courses.json) into
+// calendar events.
 //
 //   node gcal-export.js            → writes calendar.ics + gcal-events.json
 //   node gcal-export.js --json     → prints the event list as JSON (for syncing)
@@ -10,9 +11,9 @@
 //   node gcal-export.js --work-blocks     → also emit workPlan study blocks
 //   node gcal-export.js --include-past    → also emit deadlines already passed
 //
-// By default only deadlines from today onward are emitted. config.js keeps the
-// whole term's history, but a calendar feed should not backfill a finished term
-// into someone's calendar every time they subscribe.
+// By default only deadlines from today onward are emitted. assignments.json
+// keeps the whole term's history, but a calendar feed should not backfill a
+// finished term into someone's calendar every time they subscribe.
 //
 // calendar.ics is committed and served by GitHub Pages, so Google Calendar
 // can subscribe to it by URL and pick up every scrape automatically.
@@ -33,16 +34,6 @@ function utcOffset(dateStr) {
   return d >= dstStart && d < dstEnd ? '-04:00' : '-05:00';
 }
 
-// Google Calendar colorIds chosen to match the recurring class events
-// already on the School Schedule calendar.
-const COURSE_COLOR = {
-  eecs270: '4',   // Flamingo
-  eecs370: '2',   // Sage
-  eecs442: '9',   // Blueberry
-  stats250: '5',  // Banana
-  tc300: '3'      // Grape
-};
-
 const TYPE_LABEL = {
   project: 'Project',
   quiz: 'Quiz',
@@ -61,10 +52,15 @@ const TYPE_DURATION = { exam: 120, lab: 60, lecture: 30 };
 const DEFAULT_DURATION = 30;
 
 function loadConfig() {
-  const src = fs.readFileSync(path.join(ROOT, 'config.js'), 'utf8');
-  const sandbox = {};
-  new Function('global', src + '\nglobal.APP_CONFIG = APP_CONFIG;')(sandbox);
-  return sandbox.APP_CONFIG;
+  const courseData = JSON.parse(fs.readFileSync(path.join(ROOT, 'courses.json'), 'utf8'));
+  const assignmentData = JSON.parse(fs.readFileSync(path.join(ROOT, 'assignments.json'), 'utf8'));
+  return {
+    title: courseData.title,
+    subtitle: courseData.subtitle,
+    courses: courseData.courses,
+    assignments: assignmentData.assignments,
+    autoCompleted: assignmentData.autoCompleted,
+  };
 }
 
 function parseTime(t) {
@@ -133,7 +129,7 @@ function buildEvents(cfg, opts) {
       syncId: a.id,
       summary: `${courseName}: ${a.name}`,
       description: buildDescription(a, cfg),
-      colorId: COURSE_COLOR[a.course],
+      colorId: cfg.courses[a.course]?.gcalColorId,
       course: a.course,
       type: a.type,
       completed: done.has(a.id)
@@ -170,7 +166,7 @@ function buildEvents(cfg, opts) {
           syncId: `${a.id}#work${i}`,
           summary: `Work: ${courseName} ${a.name}`,
           description: `${w.task}\n\nPlanned: ${w.hours}h\n\nSynced from assignment-calendar [${a.id}]`,
-          colorId: COURSE_COLOR[a.course],
+          colorId: cfg.courses[a.course]?.gcalColorId,
           course: a.course,
           type: 'workblock',
           allDay: true,

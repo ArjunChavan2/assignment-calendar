@@ -1,19 +1,23 @@
 #!/Users/arjunchavan/tasky/assignment-calendar/.venv/bin/python3
 """
 scrape_assignments.py
-Scrape Canvas + Gradescope for assignments, update config.js, and push to GitHub.
+Scrape Canvas + Gradescope for assignments and update assignments.json.
 
 Requirements:
     pip install selenium requests icalendar
 
 Usage:
-    python3 scrape_assignments.py              # scrape, update, push
+    python3 scrape_assignments.py              # scrape, update, validate — no push
+    python3 scrape_assignments.py --push       # also commit + push to GitHub
     python3 scrape_assignments.py --dry-run    # preview changes, don't write
-    python3 scrape_assignments.py --no-push    # update config.js but skip git push
     python3 scrape_assignments.py --headless   # run Chrome headless (skip if first run)
 
 First run: Chrome opens so you can log into Canvas + Gradescope.
 The browser profile persists at ~/.assignment-scraper-profile/ for future runs.
+
+Starting a new term: edit courses.json (term/course/Canvas/Gradescope config) —
+that's the only file to touch. This script, validate-config.js, and
+gcal-export.js all read course/term data from it.
 """
 
 import argparse
@@ -23,7 +27,6 @@ import re
 import shutil
 import subprocess
 import sys
-import textwrap
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -39,7 +42,7 @@ _RED    = "\x1b[31m"
 _CYAN   = "\x1b[36m"
 _GRAY   = "\x1b[90m"
 
-_TOTAL_STEPS = 11
+_TOTAL_STEPS = 10
 
 def _step_header(n, label):
     bar = f"{_BOLD}{_CYAN}[{n}/{_TOTAL_STEPS}]{_RESET}"
@@ -118,7 +121,15 @@ from icalendar import Calendar
 
 # ── Constants ──────────────────────────────────────────────────────────
 
-CONFIG_PATH = Path.home() / "tasky" / "assignment-calendar" / "config.js"
+ROOT = Path.home() / "tasky" / "assignment-calendar"
+COURSES_JSON_PATH = ROOT / "courses.json"
+ASSIGNMENTS_JSON_PATH = ROOT / "assignments.json"
+CONFIG_PATH = ROOT / "config.js"
+BUILD_CONFIG_PATH = ROOT / "build-config.js"
+VALIDATE_CONFIG_PATH = ROOT / "validate-config.js"
+CALENDAR_ICS_PATH = ROOT / "calendar.ics"
+GCAL_EXPORT_PATH = ROOT / "gcal-export.js"
+GCAL_EVENTS_PATH = ROOT / "gcal-events.json"
 REPO_URL = "https://github.com/ArjunChavan2/assignment-calendar.git"
 CANVAS_BASE = "https://umich.instructure.com"
 GOOGLE_ACCOUNT = "akchavan@umich.edu"
@@ -128,58 +139,38 @@ ICS_URL = (
 )
 CHROME_PROFILE_DIR = Path.home() / ".assignment-scraper-profile"
 
-# ---- Term ----
-# Update these four lines each term; everything else keys off them.
-TERM_NAME = "Fall 2026"
-TERM_START = "2026-08-31"
-TERM_END = "2026-12-12"   # exclusive upper bound for the Canvas planner query
 
-# Canvas course IDs — maps config course key → Canvas course ID
-# These are used for the per-course assignments API
-# If a course ID is unknown, the scraper will try to discover it from enrolled courses
-CANVAS_COURSE_IDS = {
-    # Fall 2026 IDs unknown — discover_canvas_course_ids() resolves them from
-    # Canvas enrollment at runtime. Pin one here only if discovery misses it.
-}
+# ---- Term / course config, loaded from courses.json ----
+# Starting a new term means editing courses.json only — everything below
+# derives from it, so there's nothing left here to drift out of sync.
+def _load_course_config():
+    course_data = json.loads(COURSES_JSON_PATH.read_text())
+    courses = course_data["courses"]
 
-GRADESCOPE_COURSES = {
-    "eecs373": [
-        {"url_id": "1342020", "label": "EECS 373"},
-    ],
-    "eecs445": [
-        {"url_id": "1373988", "label": "EECS 445"},
-    ],
-}
+    course_list = [(key, c["name"]) for key, c in courses.items()]
+    course_prefix = {key: c["idPrefix"] for key, c in courses.items()}
 
-# Course name → config key mapping for Canvas planner items
-# config course key → short id prefix. Shared by generate_canvas_id() and
-# generate_gradescope_id() so the same assignment gets the same id no matter
-# which source found it — otherwise the merge sees two items, not one.
-# The term's courses, in display order. Everything that needs to iterate over
-# courses derives from this — previously three separate hardcoded lists drifted
-# apart on the Fall 2026 rollover and silently skipped every Canvas course.
-COURSES = [
-    ("eecs367", "EECS 367"),
-    ("eecs373", "EECS 373"),
-    ("eecs445", "EECS 445"),
-    ("clciv371", "CLCIV 371"),
-]
+    canvas_course_ids = {
+        key: c["canvasCourseId"] for key, c in courses.items() if c.get("canvasCourseId")
+    }
+    canvas_course_map = {}
+    for key, c in courses.items():
+        for pattern in c.get("canvasPatterns", []):
+            canvas_course_map[pattern] = key
 
-COURSE_PREFIX = {
-    "eecs367": "367",
-    "eecs373": "373",
-    "eecs445": "445",
-    "clciv371": "clciv",
-}
+    gradescope_courses = {
+        key: c["gradescope"] for key, c in courses.items() if c.get("gradescope")
+    }
 
-CANVAS_COURSE_MAP = {
-    "eecs 367": "eecs367",
-    "rob 380": "eecs367",     # cross-listed as ROB 380
-    "eecs 373": "eecs373",
-    "eecs 445": "eecs445",
-    "clciv 371": "clciv371",
-    "clciv371": "clciv371",
-}
+    return course_data, course_list, course_prefix, canvas_course_ids, canvas_course_map, gradescope_courses
+
+
+(_COURSE_DATA, COURSES, COURSE_PREFIX, CANVAS_COURSE_IDS,
+ CANVAS_COURSE_MAP, GRADESCOPE_COURSES) = _load_course_config()
+
+TERM_NAME = _COURSE_DATA["term"]
+TERM_START = _COURSE_DATA["termStart"]
+TERM_END = _COURSE_DATA["termEnd"]   # exclusive upper bound for the Canvas planner query
 
 TODAY = datetime.now().strftime("%Y-%m-%d")
 TODAY_DISPLAY = datetime.now().strftime("%B %-d, %Y")  # e.g. "March 17, 2026"
@@ -215,160 +206,35 @@ def format_date_eastern(dt):
     return et.strftime("%Y-%m-%d")
 
 
-# ── Parse config.js ───────────────────────────────────────────────────
+# ── Read/write assignments.json ───────────────────────────────────────
 
 def parse_config():
-    """Use Node.js to parse config.js → (assignments list, autoCompleted list, raw text)."""
-    raw = CONFIG_PATH.read_text()
-    node_script = textwrap.dedent(f"""\
-        const fs = require('fs');
-        const src = fs.readFileSync('{CONFIG_PATH}', 'utf8');
-        const fn = new Function(src + '; return APP_CONFIG;');
-        const config = fn();
-        console.log(JSON.stringify({{
-            assignments: config.assignments,
-            autoCompleted: config.autoCompleted,
-            scrapeDate: config.scrapeDate
-        }}));
-    """)
-    result = subprocess.run(
-        ["node", "-e", node_script],
-        capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        sys.exit(f"Failed to parse config.js:\n{result.stderr}")
-    data = json.loads(result.stdout)
-    return data["assignments"], data["autoCompleted"], raw
+    """Load assignments.json → (assignments list, autoCompleted list)."""
+    data = json.loads(ASSIGNMENTS_JSON_PATH.read_text())
+    return data["assignments"], data["autoCompleted"]
 
 
-# ── Write config.js ───────────────────────────────────────────────────
-
-def format_assignment_js(a):
-    """Format a single assignment as a JS object literal matching the config style."""
-    parts = [
-        f'id: "{a["id"]}"',
-        f'name: "{a["name"]}"',
-        f'course: "{a["course"]}"',
-        f'due: "{a["due"]}"',
-    ]
-    if a.get("time") is None:
-        parts.append("time: null")
-    else:
-        parts.append(f'time: "{a["time"]}"')
-    parts.append(f'type: "{a["type"]}"')
-    parts.append(f'points: "{a["points"]}"')
-    if isinstance(a.get("hours"), float) and a["hours"] == int(a["hours"]):
-        parts.append(f'hours: {int(a["hours"])}')
-    else:
-        parts.append(f'hours: {a.get("hours", 1)}')
-    if a.get("specUrl"):
-        parts.append(f'specUrl: "{a["specUrl"]}"')
-    return "    { " + ", ".join(parts) + " },"
-
-
-def write_config(raw_text, assignments, auto_completed):
-    """Update config.js by replacing scrapeDate, assignments array, and autoCompleted."""
-    # Update scrapeDate
-    raw_text = re.sub(
-        r'scrapeDate:\s*"[^"]*"',
-        f'scrapeDate: "{TODAY_DISPLAY}"',
-        raw_text
-    )
-
-    # Build assignments block
-    # Group assignments by course for comments
-    course_order = [k for k, _ in COURSES]
-    course_labels = dict(COURSES)
-
-    lines = []
-    for course_key in course_order:
-        course_assignments = [a for a in assignments if a["course"] == course_key]
-        if not course_assignments:
-            continue
-        # Group by type within course
-        type_groups = {}
-        for a in course_assignments:
-            t = a.get("type", "assignment")
-            type_groups.setdefault(t, []).append(a)
-        first_type = True
-        for atype, items in type_groups.items():
-            label = course_labels.get(course_key, course_key)
-            type_label = {
-                "project": "Projects", "quiz": "Quizzes", "exam": "Exams",
-                "homework": "Homeworks", "prelab": "Pre-Labs", "ep": "EPs",
-                "lab": "Labs", "casestudy": "Case Studies", "lecture": "Lecture Activities",
-                "assignment": "", "reading": "Readings",
-            }.get(atype, atype.title())
-            comment_suffix = f" - {type_label}" if type_label else ""
-            if first_type:
-                lines.append(f"    // ===== {label}{comment_suffix} =====")
-                first_type = False
-            else:
-                lines.append(f"    // {label}{comment_suffix}")
-            for a in items:
-                lines.append(format_assignment_js(a))
-
-    assignments_block = "\n".join(lines)
-
-    # Replace assignments array
-    raw_text = re.sub(
-        r'(assignments:\s*\[)\s*\n.*?\n(\s*\],)',
-        f'\\1\n{assignments_block}\n\\2',
-        raw_text,
-        flags=re.DOTALL
-    )
-
-    # Build autoCompleted block
-    ac_lines = []
-    # Group by course prefix
-    ac_groups = {"270": [], "370": [], "442": [], "s250": [], "tc": []}
-    for aid in auto_completed:
-        for prefix in ac_groups:
-            if aid.startswith(prefix):
-                ac_groups[prefix].append(aid)
-                break
-    ac_comments = {
-        "270": "EECS 270", "370": "EECS 370", "442": "EECS 442",
-        "s250": "STATS 250", "tc": "TC 300",
-    }
-    for prefix, ids in ac_groups.items():
-        if not ids:
-            continue
-        ac_lines.append(f"    // {ac_comments[prefix]}")
-        # Chunk into lines of ~5-6 IDs
-        chunk_size = 6
-        for i in range(0, len(ids), chunk_size):
-            chunk = ids[i:i+chunk_size]
-            quoted = ",".join(f"'{x}'" for x in chunk)
-            trailing = "," if i + chunk_size < len(ids) else ","
-            ac_lines.append(f"    {quoted}{trailing}")
-
-    ac_block = "\n".join(ac_lines)
-
-    raw_text = re.sub(
-        r'(autoCompleted:\s*\[)\s*\n.*?\n(\s*\])',
-        f'\\1\n{ac_block}\n\\2',
-        raw_text,
-        flags=re.DOTALL
-    )
-
-    CONFIG_PATH.write_text(raw_text)
-    return raw_text
-
-
-DATA_JSON_PATH = Path.home() / "tasky" / "assignment-calendar" / "data.json"
-CALENDAR_ICS_PATH = Path.home() / "tasky" / "assignment-calendar" / "calendar.ics"
-GCAL_EXPORT_PATH = Path.home() / "tasky" / "assignment-calendar" / "gcal-export.js"
-
-
-def write_data_json(assignments, auto_completed):
-    """Export assignments and autoCompleted as a clean data.json for external apps."""
+def write_assignments_json(assignments, auto_completed):
+    """Write the scraped assignments + autoCompleted + scrapeDate to assignments.json."""
     data = {
         "scrapeDate": TODAY_DISPLAY,
         "assignments": assignments,
         "autoCompleted": list(auto_completed),
     }
-    DATA_JSON_PATH.write_text(json.dumps(data, indent=2))
+    ASSIGNMENTS_JSON_PATH.write_text(json.dumps(data, indent=2) + "\n")
+
+
+def build_config():
+    """Regenerate config.js from courses.json + assignments.json (for index.html)."""
+    result = subprocess.run(
+        ["node", str(BUILD_CONFIG_PATH)],
+        cwd=str(BUILD_CONFIG_PATH.parent),
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        _err(f"build-config.js failed:\n{result.stderr}")
+        return False
+    return True
 
 
 # ── Selenium setup ─────────────────────────────────────────────────────
@@ -824,435 +690,6 @@ def fetch_canvas_ics():
     return items
 
 
-# ── Course website scraping ───────────────────────────────────────────
-
-# NOTE: the two scrapers below target Winter 2026 course sites and are no longer
-# called from main(). They are kept as working reference implementations for
-# writing a Fall 2026 scraper once EECS 373 / AutoRob publish their schedules.
-EECS270_URL = "https://www.eecs270.org/"
-EECS370_URL = "https://eecs370.github.io/"
-
-
-def scrape_eecs270_website(driver):
-    """Scrape eecs270.org for projects, quizzes, exams with due dates."""
-    driver.get(EECS270_URL)
-    time.sleep(3)
-
-    try:
-        data = driver.execute_script(r"""
-            const results = [];
-            const seen = new Set();  // prevent duplicates within this scrape
-
-            function addResult(item) {
-                const key = item.id + '|' + item.date;
-                if (seen.has(key)) return;
-                seen.add(key);
-                results.push(item);
-            }
-
-            // Date regex: matches "Mon Jan 13", "Thu Mar 25", "January 20, 2026",
-            // "Mar 11", "1/13", etc. — broad enough to catch any date-like cell
-            const dateRe = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\w*[,.\s]+(\w{3,9}\.?\s+\d{1,2})/i;
-            const shortDateRe = /^(\w{3,9}\.?\s+\d{1,2})/i;
-            const numDateRe = /^(\d{1,2})\/(\d{1,2})/;
-
-            function extractDate(text) {
-                text = (text || '').trim();
-                // "Thu Jan 29" / "Monday March 25"
-                let m = text.match(dateRe);
-                if (m) return m[2].replace('.', '');
-                // "Jan 29" / "March 25"
-                m = text.match(shortDateRe);
-                if (m && /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(m[1])) return m[1].replace('.', '');
-                return null;
-            }
-
-            // ── 1. Parse ALL tables on the page ──
-            const tables = document.querySelectorAll('table');
-            for (const table of tables) {
-                const rows = table.querySelectorAll('tr');
-                let currentDate = '';
-
-                for (const row of rows) {
-                    const cells = Array.from(row.querySelectorAll('td, th'));
-                    if (cells.length < 1) continue;
-
-                    // Try to extract a date from ANY cell in the row
-                    for (const cell of cells) {
-                        const d = extractDate(cell.textContent.trim());
-                        if (d) { currentDate = d; break; }
-                    }
-
-                    // Now scan ALL cell text for assignment keywords
-                    const rowText = cells.map(c => c.textContent.trim()).join(' | ');
-
-                    // Quiz N (with optional topic in parens)
-                    const quizMatches = rowText.matchAll(/Quiz\s*(\d+)(?:\s*[-:(]\s*([^)|]+))?/gi);
-                    for (const qm of quizMatches) {
-                        const num = qm[1];
-                        const topic = qm[2] ? qm[2].trim() : '';
-                        addResult({
-                            name: topic ? `Quiz ${num} (${topic})` : `Quiz ${num}`,
-                            type: 'quiz',
-                            date: currentDate,
-                            id: `270-q${num}`
-                        });
-                    }
-
-                    // Exam N (but not "conflict" or "review")
-                    const examMatches = rowText.matchAll(/Exam\s*(\d)\b/gi);
-                    for (const em of examMatches) {
-                        if (/conflict|review/i.test(rowText.substring(Math.max(0, em.index - 10), em.index + em[0].length + 20))) continue;
-                        const timeMatch = rowText.match(/(\d{1,2}[:-]\d{2}\s*(pm|am|PM|AM))/);
-                        addResult({
-                            name: `Exam ${em[1]}`,
-                            type: 'exam',
-                            date: currentDate,
-                            time: timeMatch ? timeMatch[1] : null,
-                            id: `270-exam${em[1]}`
-                        });
-                    }
-
-                    // Final Exam
-                    if (/Final\s*Exam/i.test(rowText) && !/conflict/i.test(rowText)) {
-                        const timeMatch = rowText.match(/(\d{1,2}[:-]\d{2}\s*(pm|am|PM|AM))/);
-                        addResult({
-                            name: 'Final Exam',
-                            type: 'exam',
-                            date: currentDate || rowText,
-                            time: timeMatch ? timeMatch[1] : null,
-                            id: '270-final'
-                        });
-                    }
-
-                    // Project deadlines mentioned in schedule rows
-                    // Matches: "P5 due", "Project 5 due", "P5", "Project 5 Signoff"
-                    const projInRow = rowText.matchAll(/(?:Project|P)\s*(\d+)\s*([A-Za-z]*)/gi);
-                    for (const pm of projInRow) {
-                        const num = pm[1];
-                        const suffix = (pm[2] || '').trim().toLowerCase();
-                        // Skip if it's just a lecture topic mentioning a project
-                        if (/lecture|topic|chapter|reading/i.test(rowText) && !/due|deadline|signoff|autograde/i.test(rowText)) continue;
-                        if (/due|deadline|signoff|autograde|checkpoint/i.test(rowText) || /due|deadline/i.test(suffix)) {
-                            let name = `Project ${num}`;
-                            let idSuffix = '';
-                            if (/signoff/i.test(suffix) || /signoff/i.test(rowText)) {
-                                name += ' Signoff';
-                                idSuffix = '-signoff';
-                            } else if (/autograde/i.test(suffix) || /autograde/i.test(rowText)) {
-                                name += ' Autograde';
-                                idSuffix = '-auto';
-                            } else if (/checkpoint/i.test(suffix) || /checkpoint/i.test(rowText)) {
-                                name += ' Checkpoint';
-                                idSuffix = '-cp';
-                            }
-                            addResult({
-                                name: name,
-                                type: 'project',
-                                date: currentDate,
-                                id: `270-p${num}${idSuffix}`
-                            });
-                        }
-                    }
-
-                    // Lab N
-                    const labMatches = rowText.matchAll(/Lab\s*(\d+)/gi);
-                    for (const lm of labMatches) {
-                        // Skip if it's a column header or just "Lab" section label
-                        if (/due|deadline|submit/i.test(rowText)) {
-                            addResult({
-                                name: `Lab ${lm[1]}`,
-                                type: 'lab',
-                                date: currentDate,
-                                id: `270-lab${lm[1]}`
-                            });
-                        }
-                    }
-
-                    // Homework / HW N
-                    const hwMatches = rowText.matchAll(/(?:Homework|HW)\s*(\d+)/gi);
-                    for (const hm of hwMatches) {
-                        if (/due|deadline|submit/i.test(rowText)) {
-                            addResult({
-                                name: `Homework ${hm[1]}`,
-                                type: 'assignment',
-                                date: currentDate,
-                                id: `270-hw${hm[1]}`
-                            });
-                        }
-                    }
-                }
-            }
-
-            // ── 2. Project cards with due dates ──
-            const headings = document.querySelectorAll('h1, h2, h3, h4, h5, [class*="card"] h2, [class*="card"] h3, [class*="card"] h4');
-            headings.forEach(h => {
-                const text = h.textContent.trim();
-                const pm = text.match(/Project\s*(\d+)/i);
-                if (!pm) return;
-                const num = pm[1];
-
-                // Search nearby elements and parent for a "Due" date
-                let dueText = '';
-                // Check siblings
-                let el = h.nextElementSibling;
-                for (let i = 0; i < 8 && el; i++) {
-                    const t = el.textContent || '';
-                    const dm = t.match(/Due[:\s]+([\w\s,]+\d{1,2}(?:[,\s]*\d{4})?)/i);
-                    if (dm) { dueText = dm[1].trim(); break; }
-                    el = el.nextElementSibling;
-                }
-                // Check parent container
-                if (!dueText) {
-                    const parent = h.closest('div, section, article, li');
-                    if (parent) {
-                        const dm = parent.textContent.match(/Due[:\s]+([\w\s,]+\d{1,2}(?:[,\s]*\d{4})?)/i);
-                        if (dm) dueText = dm[1].trim();
-                    }
-                }
-                // Check the heading text itself for inline dates
-                if (!dueText) {
-                    const dm = text.match(/Due[:\s]+([\w\s,]+\d{1,2})/i);
-                    if (dm) dueText = dm[1].trim();
-                }
-
-                if (dueText) {
-                    addResult({
-                        name: text,
-                        type: 'project',
-                        date: dueText,
-                        id: `270-p${num}`
-                    });
-                }
-            });
-
-            // ── 3. Scan all links and bold/strong text for deadlines ──
-            const links = document.querySelectorAll('a, strong, b, em');
-            links.forEach(el => {
-                const text = el.textContent.trim();
-                // "Quiz 15 due Jan 29" or similar inline mentions
-                const qm = text.match(/Quiz\s*(\d+)/i);
-                if (qm) {
-                    const dateM = text.match(/(?:due|by)?\s*(\w{3,9}\.?\s+\d{1,2})/i);
-                    if (dateM) {
-                        addResult({
-                            name: `Quiz ${qm[1]}`,
-                            type: 'quiz',
-                            date: dateM[1],
-                            id: `270-q${qm[1]}`
-                        });
-                    }
-                }
-            });
-
-            return results;
-        """)
-    except Exception as e:
-        _warn(f"eecs270.org scrape error: {e}")
-        return []
-
-    # Convert to our assignment format
-    assignments = []
-    seen_ids = set()
-    for item in (data or []):
-        aid = item.get("id", "")
-        if not aid or aid in seen_ids:
-            continue
-        seen_ids.add(aid)
-
-        due_date = _parse_course_date(item.get("date", ""))
-        if not due_date:
-            continue
-
-        assignments.append({
-            "id": aid,
-            "name": item["name"],
-            "course": "eecs270",
-            "due": due_date,
-            "time": item.get("time"),
-            "type": item.get("type", "assignment"),
-            "points": "—",
-            "hours": guess_hours(item.get("type", "assignment")),
-        })
-
-    return assignments
-
-
-def scrape_eecs370_website(driver):
-    """Scrape eecs370.github.io schedule table for projects, homeworks, exams."""
-    driver.get(EECS370_URL)
-    time.sleep(3)
-
-    try:
-        data = driver.execute_script("""
-            const results = [];
-
-            // Parse all tables — the schedule table has columns: Day, Lecture, Lab, Deadline, Readings
-            const tables = document.querySelectorAll('table');
-            for (const table of tables) {
-                const headers = Array.from(table.querySelectorAll('th')).map(h => h.textContent.trim().toLowerCase());
-                const dayIdx = headers.findIndex(h => h.includes('day'));
-                const deadlineIdx = headers.findIndex(h => h.includes('deadline'));
-                if (dayIdx === -1 || deadlineIdx === -1) continue;
-
-                const rows = table.querySelectorAll('tbody tr, tr');
-                let currentDate = '';
-                for (const row of rows) {
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length <= Math.max(dayIdx, deadlineIdx)) continue;
-
-                    const dayText = cells[dayIdx]?.textContent?.trim() || '';
-                    const deadlineText = cells[deadlineIdx]?.textContent?.trim() || '';
-
-                    // Update current date
-                    if (dayText && /\\w{3}\\s+\\w{3}\\s+\\d/.test(dayText)) {
-                        currentDate = dayText;
-                    }
-
-                    if (!deadlineText || deadlineText === '-') continue;
-
-                    // Parse deadline text: "P1a", "P2a", "HW 1", "P3 Checkpoint", etc.
-                    // Project parts: P1a, P1s, P1m, P2a, P2l, P2r, P3, P4
-                    const projMatch = deadlineText.match(/P(\\d)([a-z])?/g);
-                    if (projMatch) {
-                        projMatch.forEach(p => {
-                            const m = p.match(/P(\\d)([a-z])?/);
-                            if (m) {
-                                const suffix = m[2] || '';
-                                results.push({
-                                    name: `Project ${m[1]}${suffix ? ' (' + suffix.toUpperCase() + ')' : ''}`,
-                                    type: 'project',
-                                    date: currentDate,
-                                    id: `370-p${m[1]}${suffix}`
-                                });
-                            }
-                        });
-                    }
-
-                    // Homework: "HW 1", "HW 2", etc.
-                    const hwMatch = deadlineText.match(/HW\\s*(\\d+)/gi);
-                    if (hwMatch) {
-                        hwMatch.forEach(hw => {
-                            const m = hw.match(/HW\\s*(\\d+)/i);
-                            if (m) {
-                                results.push({
-                                    name: `Homework ${m[1]}`,
-                                    type: 'homework',
-                                    date: currentDate,
-                                    id: `370-hw${m[1]}`
-                                });
-                            }
-                        });
-                    }
-
-                    // Pre-Lab: "Pre-Lab N"
-                    const plMatch = deadlineText.match(/Pre-?Lab\\s*(\\d+)/gi);
-                    if (plMatch) {
-                        plMatch.forEach(pl => {
-                            const m = pl.match(/Pre-?Lab\\s*(\\d+)/i);
-                            if (m) {
-                                results.push({
-                                    name: `Pre-Lab ${m[1]}`,
-                                    type: 'prelab',
-                                    date: currentDate,
-                                    id: `370-pl${m[1]}`
-                                });
-                            }
-                        });
-                    }
-                }
-            }
-
-            // Exam info section — look for Midterm and Final
-            const body = document.body.innerText;
-
-            const midMatch = body.match(/Midterm[:\\s]*.*?(\\w+day,?\\s+\\w+\\s+\\d{1,2}(?:th|st|nd|rd)?(?:,?\\s*\\d{4})?).*?(\\d{1,2}:\\d{2}\\s*(?:AM|PM))/i);
-            if (midMatch) {
-                results.push({
-                    name: 'Midterm',
-                    type: 'exam',
-                    date: midMatch[1],
-                    time: midMatch[2],
-                    id: '370-midterm'
-                });
-            }
-
-            const finalMatch = body.match(/Final[:\\s]*.*?(\\w+day,?\\s+\\w+\\s+\\d{1,2}(?:th|st|nd|rd)?(?:,?\\s*\\d{4})?).*?(\\d{1,2}:\\d{2}\\s*(?:AM|PM))/i);
-            if (finalMatch) {
-                results.push({
-                    name: 'Final Exam',
-                    type: 'exam',
-                    date: finalMatch[1],
-                    time: finalMatch[2],
-                    id: '370-final'
-                });
-            }
-
-            return results;
-        """)
-    except Exception as e:
-        _warn(f"eecs370.github.io scrape error: {e}")
-        return []
-
-    # Convert to our assignment format
-    assignments = []
-    seen_ids = set()
-    for item in (data or []):
-        aid = item.get("id", "")
-        if not aid or aid in seen_ids:
-            continue
-        seen_ids.add(aid)
-
-        due_date = _parse_course_date(item.get("date", ""))
-        if not due_date:
-            continue
-
-        assignments.append({
-            "id": aid,
-            "name": item["name"],
-            "course": "eecs370",
-            "due": due_date,
-            "time": item.get("time"),
-            "type": item.get("type", "assignment"),
-            "points": "—",
-            "hours": guess_hours(item.get("type", "assignment")),
-        })
-
-    return assignments
-
-
-def _parse_course_date(text):
-    """Parse dates from course websites like 'Thu Jan 29', 'January 20, 2026', 'Mar 11'."""
-    if not text:
-        return None
-
-    text = text.strip()
-    # Remove ordinal suffixes (1st, 2nd, 3rd, 23th, etc.)
-    text = re.sub(r'(\d+)(st|nd|rd|th)', r'\1', text)
-    # Remove leading day-of-week (Thu, Monday, etc.)
-    text = re.sub(r'^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\w*[,\s]+', '', text, flags=re.IGNORECASE)
-
-    # Try common date formats
-    for fmt in [
-        "%B %d, %Y",   # January 20, 2026
-        "%B %d %Y",    # January 20 2026
-        "%b %d, %Y",   # Jan 20, 2026
-        "%b %d %Y",    # Jan 20 2026
-        "%B %d",        # January 20
-        "%b %d",        # Jan 20
-    ]:
-        try:
-            dt = datetime.strptime(text.strip(), fmt)
-            # Default to 2026 if no year
-            if dt.year == 1900:
-                dt = dt.replace(year=2026)
-            return dt.strftime("%Y-%m-%d")
-        except ValueError:
-            continue
-
-    return None
-
-
 # ── Gradescope scraping ───────────────────────────────────────────────
 
 def scrape_gradescope(driver, course_url_id, course_key, label):
@@ -1524,20 +961,16 @@ def merge_assignments(existing, new_items, auto_completed):
     return existing, auto_completed, changes
 
 
-# ── Validate config.js ────────────────────────────────────────────────
+# ── Validate assignments.json ─────────────────────────────────────────
 
 def validate_config():
-    """Run Node.js to validate config.js syntax."""
+    """Run validate-config.js against assignments.json + courses.json."""
     result = subprocess.run(
-        ["node", "-e", textwrap.dedent(f"""\
-            const fs = require('fs');
-            const src = fs.readFileSync('{CONFIG_PATH}', 'utf8');
-            const fn = new Function(src + '; return APP_CONFIG;');
-            const c = fn();
-            console.log('OK ' + c.assignments.length + ' assignments');
-        """)],
+        ["node", str(VALIDATE_CONFIG_PATH)],
+        cwd=str(VALIDATE_CONFIG_PATH.parent),
         capture_output=True, text=True
     )
+    print(result.stdout, end="")
     if result.returncode != 0:
         _err(f"Validation failed:\n{result.stderr}")
         return False
@@ -1561,8 +994,11 @@ def regenerate_calendar():
 
 # ── Git push ──────────────────────────────────────────────────────────
 
+PUSHED_FILES = ["assignments.json", "config.js", "calendar.ics", "gcal-events.json"]
+
+
 def git_push():
-    """Commit and push config.js via a clean /tmp clone (avoids FUSE issues)."""
+    """Commit and push the scraped data via a clean /tmp clone (avoids FUSE issues)."""
     tmp_dir = "/tmp/ac-push"
     try:
         if os.path.exists(tmp_dir):
@@ -1573,11 +1009,10 @@ def git_push():
             check=True, capture_output=True, text=True
         )
 
-        # Copy updated config.js and data.json
-        shutil.copy2(CONFIG_PATH, os.path.join(tmp_dir, "config.js"))
-        shutil.copy2(DATA_JSON_PATH, os.path.join(tmp_dir, "data.json"))
-        if os.path.exists(CALENDAR_ICS_PATH):
-            shutil.copy2(CALENDAR_ICS_PATH, os.path.join(tmp_dir, "calendar.ics"))
+        for name in PUSHED_FILES:
+            src = ROOT / name
+            if src.exists():
+                shutil.copy2(src, os.path.join(tmp_dir, name))
 
         # Check if there's actually a diff
         result = subprocess.run(
@@ -1592,7 +1027,7 @@ def git_push():
         cmds = [
             ["git", "config", "user.email", "akchavan@umich.edu"],
             ["git", "config", "user.name", "Arjun Chavan"],
-            ["git", "add", "config.js", "data.json", "calendar.ics"],
+            ["git", "add", *PUSHED_FILES],
         ]
         for cmd in cmds:
             subprocess.run(cmd, cwd=tmp_dir, check=True, capture_output=True)
@@ -1621,26 +1056,25 @@ def git_push():
 # ── Main ──────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Scrape assignments and update config.js")
+    parser = argparse.ArgumentParser(description="Scrape assignments and update assignments.json")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without writing")
-    parser.add_argument("--no-push", action="store_true", help="Update config.js but don't push")
+    parser.add_argument("--push", action="store_true", help="Commit + push to GitHub after scraping (default: local only)")
     parser.add_argument("--headless", action="store_true", help="Run Chrome in headless mode")
     parser.add_argument("--skip-canvas", action="store_true", help="Skip Canvas scraping")
-    parser.add_argument("--skip-websites", action="store_true", help="Skip course websites (eecs270.org, eecs370.github.io)")
     parser.add_argument("--skip-gradescope", action="store_true", help="Skip Gradescope scraping")
     parser.add_argument("--skip-ics", action="store_true", help="Skip ICS feed")
     args = parser.parse_args()
 
     print(f"\n{_BOLD}{'═' * 48}{_RESET}")
-    print(f"  {_BOLD}Assignment Scraper{_RESET}  {_GRAY}{TODAY}{_RESET}")
+    print(f"  {_BOLD}Assignment Scraper{_RESET}  {_GRAY}{TODAY}{_RESET}  {_GRAY}({TERM_NAME}){_RESET}")
     if args.dry_run:
         print(f"  {_YELLOW}DRY RUN — no files will be modified{_RESET}")
     print(f"{_BOLD}{'═' * 48}{_RESET}")
 
-    # 1. Parse current config
-    _step_header(1, "Reading config.js")
-    with Spinner("Parsing config…"):
-        assignments, auto_completed, raw_text = parse_config()
+    # 1. Parse current data
+    _step_header(1, "Reading assignments.json")
+    with Spinner("Parsing…"):
+        assignments, auto_completed = parse_config()
     _ok(f"{len(assignments)} assignments · {len(auto_completed)} auto-completed")
 
     all_new = []
@@ -1689,22 +1123,9 @@ def main():
             _step_header(4, "Canvas")
             _info("Skipped (--skip-canvas)")
 
-        # 5. EECS 270 course website
-        if not args.skip_websites and driver:
-            _step_header(5, "Course websites")
-            _info("No Fall 2026 course-website scraper is wired up yet")
-            _info("EECS 373 site posts no dates; autorob.org still shows Winter 2025")
-            _info("Deadlines come from Canvas + Gradescope until those sites fill in")
-        else:
-            _step_header(5, "Course websites")
-            _info("Skipped (--skip-websites)")
-
-        # 6. (reserved for a Fall 2026 course-website scraper)
-
-        # 7. Gradescope
+        # 5. Gradescope
         if not args.skip_gradescope and driver:
-            _step_header(7, "Gradescope")
-            total_gs = 0
+            _step_header(5, "Gradescope")
             for course_key, courses in GRADESCOPE_COURSES.items():
                 for course_info in courses:
                     with Spinner(f"Scraping {course_info['label']}…"):
@@ -1713,19 +1134,18 @@ def main():
                         )
                     all_new.extend(gs_assignments)
                     all_submitted.extend(gs_submitted)
-                    total_gs += len(gs_assignments)
                     _ok(f"{course_info['label']}: {len(gs_assignments)} assignments"
                         + (f" · {len(gs_submitted)} submitted" if gs_submitted else ""))
         else:
-            _step_header(7, "Gradescope")
+            _step_header(5, "Gradescope")
             _info("Skipped (--skip-gradescope)")
 
     finally:
         if driver:
             driver.quit()
 
-    # 8. Merge
-    _step_header(8, "Merging assignments")
+    # 6. Merge
+    _step_header(6, "Merging assignments")
     submitted_set = set(all_submitted)
     for item in all_new:
         if item["id"] in submitted_set:
@@ -1738,12 +1158,13 @@ def main():
     autocmp = [c for c in changes if c.strip().startswith("AUTO-COMPLETED")]
 
     if not changes:
-        _ok("No changes detected — config is already up to date")
+        _ok("No changes detected — data is already up to date")
         if not args.dry_run:
             with Spinner("Updating scrape date…"):
-                write_config(raw_text, merged, updated_ac)
-            if validate_config() and not args.no_push:
-                _step_header(11, "Pushing to GitHub")
+                write_assignments_json(merged, updated_ac)
+                build_config()
+            if validate_config() and args.push:
+                _step_header(10, "Publishing to GitHub")
                 with Spinner("Pushing…"):
                     git_push()
         _print_done(0, 0, 0)
@@ -1762,25 +1183,27 @@ def main():
         _print_done(len(added), len(updated), len(autocmp))
         return
 
-    # 9. Write config.js + data.json
-    _step_header(9, "Writing config.js + data.json")
+    # 7. Write assignments.json + regenerate config.js
+    _step_header(7, "Writing assignments.json")
     with Spinner("Saving…"):
-        write_config(raw_text, merged, updated_ac)
-        write_data_json(merged, updated_ac)
-    _ok(f"Saved → {CONFIG_PATH}")
-    _ok(f"Saved → {DATA_JSON_PATH}")
+        write_assignments_json(merged, updated_ac)
+        config_ok = build_config()
+    _ok(f"Saved → {ASSIGNMENTS_JSON_PATH}")
+    if config_ok:
+        _ok(f"Regenerated → {CONFIG_PATH}")
+    else:
+        _warn("config.js not regenerated — index.html will serve stale data")
 
-    # 10. Validate
-    _step_header(10, "Validating config.js")
-    with Spinner("Checking syntax…"):
-        valid = validate_config()
+    # 8. Validate
+    _step_header(8, "Validating assignments.json")
+    valid = validate_config()
     if not valid:
         _err("Validation failed — aborting")
         return
-    _ok(f"{len(merged)} assignments · syntax OK")
+    _ok(f"{len(merged)} assignments · valid")
 
-    # 11. Rebuild the Google Calendar feed
-    _step_header(11, "Rebuilding Google Calendar feed")
+    # 9. Rebuild the Google Calendar feed
+    _step_header(9, "Rebuilding Google Calendar feed")
     with Spinner("Generating calendar.ics…"):
         cal_ok = regenerate_calendar()
     if cal_ok:
@@ -1788,10 +1211,10 @@ def main():
     else:
         _warn("calendar.ics not regenerated — Google Calendar will serve stale data")
 
-    # 12. Push
-    _step_header(12, "Pushing to GitHub")
-    if args.no_push:
-        _info("Skipped (--no-push)")
+    # 10. Publish
+    _step_header(10, "Publishing to GitHub")
+    if not args.push:
+        _info("Skipped — run with --push to commit + push these changes")
     else:
         with Spinner("Cloning & pushing…"):
             pushed = git_push()
