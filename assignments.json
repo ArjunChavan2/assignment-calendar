@@ -112,8 +112,17 @@
       "hours": 6
     },
     {
+      "id": "367-p3-checkpoint",
+      "name": "Project 3 Checkpoint - Zero Configuration FK",
+      "course": "eecs367",
+      "due": "2026-10-12",
+      "type": "project",
+      "points": "—",
+      "hours": 4
+    },
+    {
       "id": "367-p3",
-      "name": "Project 3 - Forward Kinematics",
+      "name": "Project 3 Final - Forward Kinematics",
       "course": "eecs367",
       "due": "2026-10-20",
       "type": "project",
