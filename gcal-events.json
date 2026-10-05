@@ -1,16 +1,16 @@
 [
   {
-    "uid": "assignment-clciv-week-2-the-rise-of-the-polis@assignment-calendar",
-    "syncId": "clciv-week-2-the-rise-of-the-polis",
-    "summary": "CLCIV 371: Week 2: The Rise of the Polis ",
-    "description": "CLCIV 371 — Assignment\nPoints: 100\nEstimated work: 1h\nCourse site: https://umich.instructure.com/\n\nSynced from assignment-calendar [clciv-week-2-the-rise-of-the-polis]",
-    "colorId": "3",
-    "course": "clciv371",
-    "type": "assignment",
+    "uid": "assignment-373-hw4@assignment-calendar",
+    "syncId": "373-hw4",
+    "summary": "EECS 373: HW 4",
+    "description": "EECS 373 — Homework\nPoints: —\nEstimated work: 6h\nCourse site: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from assignment-calendar [373-hw4]",
+    "colorId": "4",
+    "course": "eecs373",
+    "type": "homework",
     "completed": false,
     "allDay": false,
-    "start": "2026-09-10T12:29:00-04:00",
-    "end": "2026-09-10T12:59:00-04:00",
+    "start": "2026-10-05T23:29:00-04:00",
+    "end": "2026-10-05T23:59:00-04:00",
     "availability": "AVAILABILITY_FREE",
     "reminders": [
       {
@@ -20,6 +20,278 @@
       {
         "method": "popup",
         "minutes": 120
+      }
+    ]
+  },
+  {
+    "uid": "assignment-373-pl5@assignment-calendar",
+    "syncId": "373-pl5",
+    "summary": "EECS 373: Lab 5 - Pre-Lab",
+    "description": "EECS 373 — Pre-lab\nPoints: 16\nEstimated work: 1h\nCourse site: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from assignment-calendar [373-pl5]",
+    "colorId": "4",
+    "course": "eecs373",
+    "type": "prelab",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-10-06T18:00:00-04:00",
+    "end": "2026-10-06T18:30:00-04:00",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 120
+      }
+    ]
+  },
+  {
+    "uid": "assignment-clciv-exam1@assignment-calendar",
+    "syncId": "clciv-exam1",
+    "summary": "CLCIV 371: Hour Exam 1",
+    "description": "CLCIV 371 — Exam\nPoints: —\nEstimated work: 12h\nCourse site: https://umich.instructure.com/\n\nSynced from assignment-calendar [clciv-exam1]",
+    "colorId": "3",
+    "course": "clciv371",
+    "type": "exam",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-10-08T10:00:00-04:00",
+    "end": "2026-10-08T12:00:00-04:00",
+    "availability": "AVAILABILITY_BUSY",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 60
+      }
+    ]
+  },
+  {
+    "uid": "assignment-373-ideation@assignment-calendar",
+    "syncId": "373-ideation",
+    "summary": "EECS 373: Project - Ideation Slides",
+    "description": "EECS 373 — Project\nPoints: 9\nEstimated work: 8h\nCourse site: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from assignment-calendar [373-ideation]",
+    "colorId": "4",
+    "course": "eecs373",
+    "type": "project",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-10-08T23:29:00-04:00",
+    "end": "2026-10-08T23:59:00-04:00",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 120
+      }
+    ]
+  },
+  {
+    "uid": "assignment-373-lab5@assignment-calendar",
+    "syncId": "373-lab5",
+    "summary": "EECS 373: Lab 5 - In-Lab",
+    "description": "EECS 373 — Lab\nPoints: 70\nEstimated work: 1.5h\nCourse site: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from assignment-calendar [373-lab5]",
+    "colorId": "4",
+    "course": "eecs373",
+    "type": "lab",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-10-12T22:59:00-04:00",
+    "end": "2026-10-12T23:59:00-04:00",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 120
+      }
+    ]
+  },
+  {
+    "uid": "assignment-373-postlab5@assignment-calendar",
+    "syncId": "373-postlab5",
+    "summary": "EECS 373: Lab 5 - Post-Lab",
+    "description": "EECS 373 — Lab\nPoints: 14\nEstimated work: 1.5h\nCourse site: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from assignment-calendar [373-postlab5]",
+    "colorId": "4",
+    "course": "eecs373",
+    "type": "lab",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-10-12T22:59:00-04:00",
+    "end": "2026-10-12T23:59:00-04:00",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 120
+      }
+    ]
+  },
+  {
+    "uid": "assignment-373-hw5@assignment-calendar",
+    "syncId": "373-hw5",
+    "summary": "EECS 373: HW 5",
+    "description": "EECS 373 — Homework\nPoints: —\nEstimated work: 6h\nCourse site: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from assignment-calendar [373-hw5]",
+    "colorId": "4",
+    "course": "eecs373",
+    "type": "homework",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-10-12T23:29:00-04:00",
+    "end": "2026-10-12T23:59:00-04:00",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 120
+      }
+    ]
+  },
+  {
+    "uid": "assignment-clciv-festivals-quiz@assignment-calendar",
+    "syncId": "clciv-festivals-quiz",
+    "summary": "CLCIV 371: Festivals Quiz",
+    "description": "CLCIV 371 — Quiz\nPoints: —\nEstimated work: 1.5h\nCourse site: https://umich.instructure.com/\n\nSynced from assignment-calendar [clciv-festivals-quiz]",
+    "colorId": "3",
+    "course": "clciv371",
+    "type": "quiz",
+    "completed": false,
+    "allDay": true,
+    "start": "2026-10-15",
+    "end": "2026-10-16",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      }
+    ]
+  },
+  {
+    "uid": "assignment-445-hw2@assignment-calendar",
+    "syncId": "445-hw2",
+    "summary": "EECS 445: Homework 2",
+    "description": "EECS 445 — Homework\nPoints: 51\nEstimated work: 6h\nCourse site: https://www.gradescope.com/\n\nSynced from assignment-calendar [445-hw2]",
+    "colorId": "9",
+    "course": "eecs445",
+    "type": "homework",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-10-16T15:30:00-04:00",
+    "end": "2026-10-16T16:00:00-04:00",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 120
+      }
+    ]
+  },
+  {
+    "uid": "assignment-367-p3@assignment-calendar",
+    "syncId": "367-p3",
+    "summary": "EECS 367: Project 3 - Forward Kinematics",
+    "description": "EECS 367 — Project\nPoints: —\nEstimated work: 8h\nCourse site: https://autorob.org/\n\nSynced from assignment-calendar [367-p3]",
+    "colorId": "2",
+    "course": "eecs367",
+    "type": "project",
+    "completed": false,
+    "allDay": true,
+    "start": "2026-10-20",
+    "end": "2026-10-21",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      }
+    ]
+  },
+  {
+    "uid": "assignment-367-midterm@assignment-calendar",
+    "syncId": "367-midterm",
+    "summary": "EECS 367: Midterm Exam",
+    "description": "EECS 367 — Exam\nPoints: —\nEstimated work: 12h\nCourse site: https://autorob.org/\n\nSynced from assignment-calendar [367-midterm]",
+    "colorId": "2",
+    "course": "eecs367",
+    "type": "exam",
+    "completed": false,
+    "allDay": true,
+    "start": "2026-10-26",
+    "end": "2026-10-27",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      }
+    ]
+  },
+  {
+    "uid": "assignment-clciv-exam2@assignment-calendar",
+    "syncId": "clciv-exam2",
+    "summary": "CLCIV 371: Hour Exam 2",
+    "description": "CLCIV 371 — Exam\nPoints: —\nEstimated work: 12h\nCourse site: https://umich.instructure.com/\n\nSynced from assignment-calendar [clciv-exam2]",
+    "colorId": "3",
+    "course": "clciv371",
+    "type": "exam",
+    "completed": false,
+    "allDay": true,
+    "start": "2026-11-12",
+    "end": "2026-11-13",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      }
+    ]
+  },
+  {
+    "uid": "assignment-clciv-final@assignment-calendar",
+    "syncId": "clciv-final",
+    "summary": "CLCIV 371: Final Take-Home Exam",
+    "description": "CLCIV 371 — Exam\nPoints: —\nEstimated work: 12h\nCourse site: https://umich.instructure.com/\n\nSynced from assignment-calendar [clciv-final]",
+    "colorId": "3",
+    "course": "clciv371",
+    "type": "exam",
+    "completed": false,
+    "allDay": false,
+    "start": "2026-12-16T06:00:00-05:00",
+    "end": "2026-12-16T08:00:00-05:00",
+    "availability": "AVAILABILITY_BUSY",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      },
+      {
+        "method": "popup",
+        "minutes": 60
       }
     ]
   }

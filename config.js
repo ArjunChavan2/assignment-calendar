@@ -10,7 +10,7 @@
 const APP_CONFIG = {
   "title": "Arjun's Assignment Calendar",
   "subtitle": "EECS 367 · EECS 373 · EECS 445 · CLCIV 371 — Fall 2026",
-  "scrapeDate": "September 6, 2026",
+  "scrapeDate": "October 5, 2026",
   "firebase": {
     "apiKey": "AIzaSyCUzvAHBOMLRtrrl5uTIMe6f9sGkubTtWY",
     "authDomain": "arjun-calendar-6eefc.firebaseapp.com",
@@ -128,6 +128,132 @@ const APP_CONFIG = {
       "type": "assignment",
       "points": "100",
       "hours": 1
+    },
+    {
+      "id": "373-hw4",
+      "name": "HW 4",
+      "course": "eecs373",
+      "due": "2026-10-05",
+      "time": "11:59 PM",
+      "type": "homework",
+      "points": "—",
+      "hours": 6
+    },
+    {
+      "id": "373-pl5",
+      "name": "Lab 5 - Pre-Lab",
+      "course": "eecs373",
+      "due": "2026-10-06",
+      "time": "6:30 PM",
+      "type": "prelab",
+      "points": "16",
+      "hours": 1
+    },
+    {
+      "id": "373-ideation",
+      "name": "Project - Ideation Slides",
+      "course": "eecs373",
+      "due": "2026-10-08",
+      "time": "11:59 PM",
+      "type": "project",
+      "points": "9",
+      "hours": 8
+    },
+    {
+      "id": "373-hw5",
+      "name": "HW 5",
+      "course": "eecs373",
+      "due": "2026-10-12",
+      "time": "11:59 PM",
+      "type": "homework",
+      "points": "—",
+      "hours": 6
+    },
+    {
+      "id": "373-lab5",
+      "name": "Lab 5 - In-Lab",
+      "course": "eecs373",
+      "due": "2026-10-12",
+      "time": "11:59 PM",
+      "type": "lab",
+      "points": "70",
+      "hours": 1.5
+    },
+    {
+      "id": "373-postlab5",
+      "name": "Lab 5 - Post-Lab",
+      "course": "eecs373",
+      "due": "2026-10-12",
+      "time": "11:59 PM",
+      "type": "lab",
+      "points": "14",
+      "hours": 1.5
+    },
+    {
+      "id": "445-hw2",
+      "name": "Homework 2",
+      "course": "eecs445",
+      "due": "2026-10-16",
+      "time": "4:00 PM",
+      "type": "homework",
+      "points": "51",
+      "hours": 6
+    },
+    {
+      "id": "367-p3",
+      "name": "Project 3 - Forward Kinematics",
+      "course": "eecs367",
+      "due": "2026-10-20",
+      "type": "project",
+      "points": "—",
+      "hours": 8
+    },
+    {
+      "id": "367-midterm",
+      "name": "Midterm Exam",
+      "course": "eecs367",
+      "due": "2026-10-26",
+      "type": "exam",
+      "points": "—",
+      "hours": 12
+    },
+    {
+      "id": "clciv-exam1",
+      "name": "Hour Exam 1",
+      "course": "clciv371",
+      "due": "2026-10-08",
+      "time": "12:00 PM",
+      "type": "exam",
+      "points": "—",
+      "hours": 12
+    },
+    {
+      "id": "clciv-festivals-quiz",
+      "name": "Festivals Quiz",
+      "course": "clciv371",
+      "due": "2026-10-15",
+      "type": "quiz",
+      "points": "—",
+      "hours": 1.5
+    },
+    {
+      "id": "clciv-exam2",
+      "name": "Hour Exam 2",
+      "course": "clciv371",
+      "due": "2026-11-12",
+      "type": "exam",
+      "points": "—",
+      "hours": 12
+    },
+    {
+      "id": "clciv-final",
+      "name": "Final Take-Home Exam",
+      "course": "clciv371",
+      "due": "2026-12-16",
+      "time": "8:00 AM",
+      "type": "exam",
+      "points": "—",
+      "hours": 12
     }
   ],
   "autoCompleted": []

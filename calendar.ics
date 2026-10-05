@@ -27,25 +27,267 @@ RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
 END:STANDARD
 END:VTIMEZONE
 BEGIN:VEVENT
-UID:assignment-clciv-week-2-the-rise-of-the-polis@assignment-calendar
-DTSTAMP:20260907T033659Z
-DTSTART;TZID=America/Detroit:20260910T122900
-DTEND;TZID=America/Detroit:20260910T125900
-SUMMARY:CLCIV 371: Week 2: The Rise of the Polis 
-DESCRIPTION:CLCIV 371 — Assignment\nPoints: 100\nEstimated work: 1h\nCour
- se site: https://umich.instructure.com/\n\nSynced from assignment-calendar
-  [clciv-week-2-the-rise-of-the-polis]
+UID:assignment-373-hw4@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261005T232900
+DTEND;TZID=America/Detroit:20261005T235900
+SUMMARY:EECS 373: HW 4
+DESCRIPTION:EECS 373 — Homework\nPoints: —\nEstimated work: 6h\nCourse 
+ site: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from
+  assignment-calendar [373-hw4]
 TRANSP:TRANSPARENT
-CATEGORIES:clciv371,assignment
+CATEGORIES:eecs373,homework
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:CLCIV 371: Week 2: The Rise of the Polis 
+DESCRIPTION:EECS 373: HW 4
 TRIGGER:-PT1440M
 END:VALARM
 BEGIN:VALARM
 ACTION:DISPLAY
-DESCRIPTION:CLCIV 371: Week 2: The Rise of the Polis 
+DESCRIPTION:EECS 373: HW 4
 TRIGGER:-PT120M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-373-pl5@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261006T180000
+DTEND;TZID=America/Detroit:20261006T183000
+SUMMARY:EECS 373: Lab 5 - Pre-Lab
+DESCRIPTION:EECS 373 — Pre-lab\nPoints: 16\nEstimated work: 1h\nCourse si
+ te: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from a
+ ssignment-calendar [373-pl5]
+TRANSP:TRANSPARENT
+CATEGORIES:eecs373,prelab
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: Lab 5 - Pre-Lab
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: Lab 5 - Pre-Lab
+TRIGGER:-PT120M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-clciv-exam1@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261008T100000
+DTEND;TZID=America/Detroit:20261008T120000
+SUMMARY:CLCIV 371: Hour Exam 1
+DESCRIPTION:CLCIV 371 — Exam\nPoints: —\nEstimated work: 12h\nCourse si
+ te: https://umich.instructure.com/\n\nSynced from assignment-calendar [clc
+ iv-exam1]
+TRANSP:OPAQUE
+CATEGORIES:clciv371,exam
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:CLCIV 371: Hour Exam 1
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:CLCIV 371: Hour Exam 1
+TRIGGER:-PT60M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-373-ideation@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261008T232900
+DTEND;TZID=America/Detroit:20261008T235900
+SUMMARY:EECS 373: Project - Ideation Slides
+DESCRIPTION:EECS 373 — Project\nPoints: 9\nEstimated work: 8h\nCourse sit
+ e: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from as
+ signment-calendar [373-ideation]
+TRANSP:TRANSPARENT
+CATEGORIES:eecs373,project
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: Project - Ideation Slides
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: Project - Ideation Slides
+TRIGGER:-PT120M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-373-lab5@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261012T225900
+DTEND;TZID=America/Detroit:20261012T235900
+SUMMARY:EECS 373: Lab 5 - In-Lab
+DESCRIPTION:EECS 373 — Lab\nPoints: 70\nEstimated work: 1.5h\nCourse site
+ : https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from ass
+ ignment-calendar [373-lab5]
+TRANSP:TRANSPARENT
+CATEGORIES:eecs373,lab
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: Lab 5 - In-Lab
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: Lab 5 - In-Lab
+TRIGGER:-PT120M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-373-postlab5@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261012T225900
+DTEND;TZID=America/Detroit:20261012T235900
+SUMMARY:EECS 373: Lab 5 - Post-Lab
+DESCRIPTION:EECS 373 — Lab\nPoints: 14\nEstimated work: 1.5h\nCourse site
+ : https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from ass
+ ignment-calendar [373-postlab5]
+TRANSP:TRANSPARENT
+CATEGORIES:eecs373,lab
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: Lab 5 - Post-Lab
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: Lab 5 - Post-Lab
+TRIGGER:-PT120M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-373-hw5@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261012T232900
+DTEND;TZID=America/Detroit:20261012T235900
+SUMMARY:EECS 373: HW 5
+DESCRIPTION:EECS 373 — Homework\nPoints: —\nEstimated work: 6h\nCourse 
+ site: https://www.eecs.umich.edu/courses/eecs373/index.html\n\nSynced from
+  assignment-calendar [373-hw5]
+TRANSP:TRANSPARENT
+CATEGORIES:eecs373,homework
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: HW 5
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 373: HW 5
+TRIGGER:-PT120M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-clciv-festivals-quiz@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;VALUE=DATE:20261015
+DTEND;VALUE=DATE:20261016
+SUMMARY:CLCIV 371: Festivals Quiz
+DESCRIPTION:CLCIV 371 — Quiz\nPoints: —\nEstimated work: 1.5h\nCourse s
+ ite: https://umich.instructure.com/\n\nSynced from assignment-calendar [cl
+ civ-festivals-quiz]
+TRANSP:TRANSPARENT
+CATEGORIES:clciv371,quiz
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:CLCIV 371: Festivals Quiz
+TRIGGER:-PT1440M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-445-hw2@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261016T153000
+DTEND;TZID=America/Detroit:20261016T160000
+SUMMARY:EECS 445: Homework 2
+DESCRIPTION:EECS 445 — Homework\nPoints: 51\nEstimated work: 6h\nCourse s
+ ite: https://www.gradescope.com/\n\nSynced from assignment-calendar [445-h
+ w2]
+TRANSP:TRANSPARENT
+CATEGORIES:eecs445,homework
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 445: Homework 2
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 445: Homework 2
+TRIGGER:-PT120M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-367-p3@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;VALUE=DATE:20261020
+DTEND;VALUE=DATE:20261021
+SUMMARY:EECS 367: Project 3 - Forward Kinematics
+DESCRIPTION:EECS 367 — Project\nPoints: —\nEstimated work: 8h\nCourse s
+ ite: https://autorob.org/\n\nSynced from assignment-calendar [367-p3]
+TRANSP:TRANSPARENT
+CATEGORIES:eecs367,project
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 367: Project 3 - Forward Kinematics
+TRIGGER:-PT1440M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-367-midterm@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;VALUE=DATE:20261026
+DTEND;VALUE=DATE:20261027
+SUMMARY:EECS 367: Midterm Exam
+DESCRIPTION:EECS 367 — Exam\nPoints: —\nEstimated work: 12h\nCourse sit
+ e: https://autorob.org/\n\nSynced from assignment-calendar [367-midterm]
+TRANSP:TRANSPARENT
+CATEGORIES:eecs367,exam
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:EECS 367: Midterm Exam
+TRIGGER:-PT1440M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-clciv-exam2@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;VALUE=DATE:20261112
+DTEND;VALUE=DATE:20261113
+SUMMARY:CLCIV 371: Hour Exam 2
+DESCRIPTION:CLCIV 371 — Exam\nPoints: —\nEstimated work: 12h\nCourse si
+ te: https://umich.instructure.com/\n\nSynced from assignment-calendar [clc
+ iv-exam2]
+TRANSP:TRANSPARENT
+CATEGORIES:clciv371,exam
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:CLCIV 371: Hour Exam 2
+TRIGGER:-PT1440M
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:assignment-clciv-final@assignment-calendar
+DTSTAMP:20261005T173743Z
+DTSTART;TZID=America/Detroit:20261216T060000
+DTEND;TZID=America/Detroit:20261216T080000
+SUMMARY:CLCIV 371: Final Take-Home Exam
+DESCRIPTION:CLCIV 371 — Exam\nPoints: —\nEstimated work: 12h\nCourse si
+ te: https://umich.instructure.com/\n\nSynced from assignment-calendar [clc
+ iv-final]
+TRANSP:OPAQUE
+CATEGORIES:clciv371,exam
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:CLCIV 371: Final Take-Home Exam
+TRIGGER:-PT1440M
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:CLCIV 371: Final Take-Home Exam
+TRIGGER:-PT60M
 END:VALARM
 END:VEVENT
 END:VCALENDAR
