@@ -96,6 +96,26 @@
     ]
   },
   {
+    "uid": "assignment-367-p3-checkpoint@assignment-calendar",
+    "syncId": "367-p3-checkpoint",
+    "summary": "EECS 367: Project 3 Checkpoint - Zero Configuration FK",
+    "description": "EECS 367 — Project\nPoints: —\nEstimated work: 4h\nCourse site: https://autorob.org/\n\nSynced from assignment-calendar [367-p3-checkpoint]",
+    "colorId": "2",
+    "course": "eecs367",
+    "type": "project",
+    "completed": false,
+    "allDay": true,
+    "start": "2026-10-12",
+    "end": "2026-10-13",
+    "availability": "AVAILABILITY_FREE",
+    "reminders": [
+      {
+        "method": "popup",
+        "minutes": 1440
+      }
+    ]
+  },
+  {
     "uid": "assignment-373-lab5@assignment-calendar",
     "syncId": "373-lab5",
     "summary": "EECS 373: Lab 5 - In-Lab",
@@ -214,7 +234,7 @@
   {
     "uid": "assignment-367-p3@assignment-calendar",
     "syncId": "367-p3",
-    "summary": "EECS 367: Project 3 - Forward Kinematics",
+    "summary": "EECS 367: Project 3 Final - Forward Kinematics",
     "description": "EECS 367 — Project\nPoints: —\nEstimated work: 8h\nCourse site: https://autorob.org/\n\nSynced from assignment-calendar [367-p3]",
     "colorId": "2",
     "course": "eecs367",
